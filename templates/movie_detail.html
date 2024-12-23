@@ -1,8 +1,34 @@
 {% extends "base.html" %} {% block title %}{{ movie.title }}{% endblock %} {%
 block content %}
-<h1>{{ movie.title }}</h1>
-<p>{{ movie.description }}</p>
-<p>Genre: {{ movie.genre }}</p>
+<div style="display: flex; align-items: flex-start; margin-bottom: 20px;">
+  <div style="flex: 0 0 200px; margin-right: 20px;">
+    <img 
+      src="{{ movie.poster_url }}" 
+      alt="{{ movie.title }}" 
+      style="width: 100%; height: auto; border: 1px solid #ccc;" 
+    />
+  </div>
+
+  <div style="flex: 1;">
+    <h1>{{ movie.title }}</h1>
+    <div class="rating">
+      <p>Rate:</p>
+      <div class="stars">
+        <div class="stars-in"></div>
+      </div>
+      <span style="margin-left: 10px; font-size: 14px;">
+        {{ average_rating if average_rating else '0' }}/5.0
+      </span>
+      <span class="comments">{{ movie.comments_count }}</span>
+    </div>
+    <br>
+    <br>
+    <p><strong>Release_date:</strong>{{ movie.release_date }}</p>
+    <p><strong>Duration:</strong></p>
+    <p><strong>Description:</strong>{{ movie.description }}</p>
+    <p><strong>Genre:</strong> {{ movie.genre }}</p>
+  </div>
+</div>
 
 <h2>Screening Times</h2>
 <ul>
@@ -25,4 +51,72 @@ block content %}
     %} Add to Favorites {% endif %}
   </button>
 </form>
+
+<div>
+  <h2>Give it a Review</h2>
+  <button 
+    id="toggle-review-form" 
+    style="margin-bottom: 10px;"
+  >
+    Write a Review
+  </button>
+
+  <form 
+    id="review-form" 
+    method="post" 
+    action="{{ url_for('main.submit_review', movie_id=movie.id) }}" 
+    style="display: none; margin-top: 10px;"
+  >
+    <label for="rate">Rate this movie (e.g., 4.5):</label>
+    <input 
+      type="number" 
+      step="0.1" 
+      id="rate" 
+      name="rate" 
+      min="0.0" 
+      max="5.0" 
+      required 
+      style="margin-bottom: 10px;" 
+    />
+    <textarea 
+      name="review" 
+      placeholder="Write your review here..." 
+      style="width: 100%; height: 100px;" 
+      required>
+    </textarea>
+    <br />
+    <button type="submit" style="margin-top: 10px;">Submit Review</button>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggleButton = document.getElementById("toggle-review-form");
+    const reviewForm = document.getElementById("review-form");
+
+    toggleButton.addEventListener("click", function () {
+      if (reviewForm.style.display === "none" || reviewForm.style.display === "") {
+        reviewForm.style.display = "block";
+        toggleButton.textContent = "Cancel Review";
+      } else {
+        reviewForm.style.display = "none";
+        toggleButton.textContent = "Write a Review";
+      }
+    });
+  });
+</script>
+
+<h2>Reviews</h2>
+{% if reviews %}
+  <ul>
+    {% for review in reviews %}
+    <li>
+      <p><strong>{{ review[1] }}</strong> rated it / {{review.rate}}</p>
+      <p>{{ review[2] }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No reviews yet. Be the first to leave a review!</p>
+{% endif %}
 {% endblock %}

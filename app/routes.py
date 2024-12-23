@@ -2,8 +2,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
+from datetime import datetime
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
@@ -28,8 +29,24 @@ def home():
 @main.route("/movie/<int:movie_id>")
 def movie_detail(movie_id):
     movie = Movie.query.get_or_404(movie_id)
-    screenings = ScreeningTime.query.filter_by(movie_id=movie_id).all()
-    return render_template("movie_detail.html", movie=movie, screenings=screenings)
+    current_time = datetime.now()
+    reviews = (
+        Review.query.filter_by(movie_id=movie_id)
+        .join(User, Review.user_id == User.id)
+        .add_columns(User.username, Review.content, Review.rate)
+        .all()
+    )
+    average_rating = (
+        db.session.query(db.func.avg(Review.rate))
+        .filter(Review.movie_id == movie_id)
+        .scalar()
+    )
+    average_rating = round(average_rating, 1) if average_rating else 0
+    screenings = ScreeningTime.query.filter(
+        ScreeningTime.movie_id == movie_id,
+        ScreeningTime.date >= current_time  
+    ).all()
+    return render_template("movie_detail.html", movie=movie, reviews=reviews, screenings=screenings, average_rating=average_rating)
 
 
 @main.route("/favorite/<int:movie_id>", methods=["POST"])
@@ -116,3 +133,34 @@ def search():
     else:
         movies = []
     return render_template("search_results.html", movies=movies, query=query)
+
+
+@main.route('/submit_review/<int:movie_id>', methods=['POST'])
+@login_required
+def submit_review(movie_id):
+    try:
+        rate = float(request.form.get('rate'))
+        review_content = request.form.get('review')
+
+        if not (0.5 <= rate <= 5.0):
+            flash("Rate must be between 0.5 and 5.0.", "error")
+            return redirect(url_for('main.movie_detail', movie_id=movie_id))
+
+        if not review_content.strip():
+            flash("Review content cannot be empty.", "error")
+            return redirect(url_for('main.movie_detail', movie_id=movie_id))
+    except ValueError:
+        flash("Invalid rating value.", "error")
+        return redirect(url_for('main.movie_detail', movie_id=movie_id))
+
+    new_review = Review(
+        user_id=current_user.id,
+        movie_id=movie_id,
+        content=review_content.strip(),
+        rate=rate,
+    )
+    db.session.add(new_review)
+    db.session.commit()
+
+    flash("Your review has been submitted successfully!", "success")
+    return redirect(url_for('main.movie_detail', movie_id=movie_id))
