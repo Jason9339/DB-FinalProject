@@ -1,0 +1,97 @@
+{% extends "base.html" %} {% block content %} 
+<body>
+    <div class="container">
+        <h1>Insert a New Movie</h1>
+        <form action="/insert" method="POST">
+            <!-- Title -->
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="Enter movie title" required>
+
+            <!-- Description -->
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" placeholder="Enter movie description"></textarea>
+
+            <!-- Genre -->
+            <label for="genre">Genre:</label>
+            <input type="text" id="genre" name="genre" placeholder="Enter genre">
+
+            <!-- Release Date -->
+            <label for="release_date">Release Date:</label>
+            <input type="text" id="release_date" name="release_date" placeholder="Enter release date (YYYY-MM-DD)">
+
+            <!-- Poster URL -->
+            <label for="poster_url">Poster URL:</label>
+            <input type="text" id="poster_url" name="poster_url" placeholder="Enter poster URL">
+
+            <!-- Rating -->
+            <label for="rating">Rating:</label>
+            <input type="number" id="rating" name="rating" step="0.1" min="0" max="10" placeholder="Enter rating (0-10)">
+
+            <!-- Is Current -->
+            <label for="is_current">Is Current:</label>
+            <select id="is_current" name="is_current">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <!-- Submit Button -->
+            <button type="submit">Insert Movie</button>
+        </form>
+    </div>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</body>
+</html>
+{% endblock %}
