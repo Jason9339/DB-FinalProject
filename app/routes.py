@@ -195,3 +195,47 @@ def cinema_screenings(cinema_id):
 def my_list():
     favorite_movies = current_user.favorite_movies
     return render_template("my_list.html", favorite_movies=favorite_movies)
+
+@main.route('/insert', methods=['GET', 'POST'])
+def insert_movie():
+    if request.method == 'POST':
+        # Handle form submission
+        title = request.form.get('title')
+        description = request.form.get('description')
+        genre = request.form.get('genre')
+        release_date = request.form.get('release_date')
+        poster_url = request.form.get('poster_url')
+        rating = float(request.form.get('rating', 0))
+        is_current = request.form.get('is_current') == 'true'
+
+        # Create a new Movie instance
+        new_movie = Movie(
+            title=title,
+            description=description,
+            genre=genre,
+            release_date=release_date,
+            poster_url=poster_url,
+            rating=rating,
+            is_current=is_current
+        )
+
+        # Add to database and commit
+        db.session.add(new_movie)
+        db.session.commit()
+
+        return redirect(url_for('main.admin'))  # Redirect to admin page after successful insertion
+    
+    # Render the insert.html template for GET requests
+    return render_template('insert.html')
+
+
+@main.route('/delete', methods=['GET', 'POST'])
+def delete_movie():
+    # Logic to handle deleting movies (if needed)
+    return render_template('delete.html')
+
+
+@main.route('/update', methods=['GET', 'POST'])
+def update_movie():
+    # Logic to handle updating movies (if needed)
+    return render_template('update.html')
