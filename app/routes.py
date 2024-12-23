@@ -122,7 +122,7 @@ def search():
         movies = []
     return render_template("search_results.html", movies=movies, query=query)
 
-
+global cinema_movies
 @main.route("/admin", endpoint="admin_dashboard")
 @login_required
 def admin_dashboard():
@@ -198,15 +198,21 @@ def my_list():
 
 @main.route('/insert', methods=['GET', 'POST'])
 def insert_movie():
+    cinemas = [
+    {"name": "大都會影城", "location": "台北市信義區"},
+    {"name": "新光影城", "location": "台北市西門町"},
+    {"name": "威秀影城", "location": "台北市信義區"},
+    ]
     if request.method == 'POST':
         # Handle form submission
         title = request.form.get('title')
         description = request.form.get('description')
         genre = request.form.get('genre')
-        release_date = request.form.get('release_date')
-        poster_url = request.form.get('poster_url')
-        rating = float(request.form.get('rating', 0))
+        release_date = +request.form.get('release_date')
+        poster_url = '/static/images/'+request.form.get('poster_url')
+        rating = 0
         is_current = request.form.get('is_current') == 'true'
+        selected_cinema = request.form.get('cinema')  # Get the selected cinema
 
         # Create a new Movie instance
         new_movie = Movie(
@@ -215,18 +221,27 @@ def insert_movie():
             genre=genre,
             release_date=release_date,
             poster_url=poster_url,
-            rating=rating,
+            rating=0,
             is_current=is_current
         )
 
-        # Add to database and commit
-        db.session.add(new_movie)
-        db.session.commit()
+        # Update the cinema_movies dictionary
+        if selected_cinema == 'all':
+            # Add the movie to all cinemas
+            for cinema in cinemas:
+                if cinema["name"] not in cinema_movies:
+                    cinema_movies[cinema["name"]] = []
+                cinema_movies[cinema["name"]].append(new_movie)
+        else:
+            # Add the movie to the selected cinema only
+            if selected_cinema not in cinema_movies:
+                cinema_movies[selected_cinema] = []
+            cinema_movies[selected_cinema].append(new_movie)
 
         return redirect(url_for('main.admin'))  # Redirect to admin page after successful insertion
     
     # Render the insert.html template for GET requests
-    return render_template('insert.html')
+    return render_template('insert.html',cinemas=cinemas)
 
 
 @main.route('/delete', methods=['GET', 'POST'])
