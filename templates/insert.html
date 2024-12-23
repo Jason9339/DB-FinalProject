@@ -15,7 +15,14 @@
             <!-- Title -->
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" placeholder="Enter movie title" required>
-
+            <!-- Cinema -->
+            <label for="cinema">Cinema:</label>
+                <select id="cinema" name="cinema" required>
+                    <option value="all">All</option>
+                {% for cinema in cinemas %}
+                    <option value="{{ cinema.name }}">{{ cinema.name }} ({{ cinema.location }})</option>
+                {% endfor %}
+            </select>
             <!-- Description -->
             <label for="description">Description:</label>
             <textarea id="description" name="description" placeholder="Enter movie description"></textarea>
@@ -31,10 +38,6 @@
             <!-- Poster URL -->
             <label for="poster_url">Poster URL:</label>
             <input type="text" id="poster_url" name="poster_url" placeholder="Enter poster URL">
-
-            <!-- Rating -->
-            <label for="rating">Rating:</label>
-            <input type="number" id="rating" name="rating" step="0.1" min="0" max="10" placeholder="Enter rating (0-10)">
 
             <!-- Is Current -->
             <label for="is_current">Is Current:</label>
