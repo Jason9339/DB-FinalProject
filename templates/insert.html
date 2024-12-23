@@ -1,4 +1,13 @@
 {% extends "base.html" %} {% block content %} 
+<div class="insert-page">
+    <div class="box">
+        <div class="head">
+          <h2>Insert Dashboard</h2>
+        </div>
+        <div class="cl">&nbsp;</div>
+    </div>
+
+
 <body>
     <div class="container">
         <h1>Insert a New Movie</h1>
@@ -40,14 +49,16 @@
     </div>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+        .admin-icon {
+            text-align: right;
+            margin: 10px 20px;
         }
-
-        .container {
+        .admin-icon img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .insert-page .container {
             max-width: 600px;
             margin: auto;
             background: white;
@@ -55,19 +66,19 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        h1 {
+      
+        .insert-page h1 {
             text-align: center;
             color: #333;
         }
-
-        label {
+      
+        .insert-page label {
             display: block;
             margin-top: 10px;
             font-weight: bold;
         }
-
-        input, textarea, select {
+      
+        .insert-page input, .insert-page textarea, .insert-page select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -76,8 +87,8 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-
-        button {
+      
+        .insert-page button {
             width: 100%;
             padding: 10px;
             background-color: #007BFF;
@@ -87,11 +98,12 @@
             cursor: pointer;
             font-size: 16px;
         }
-
-        button:hover {
+      
+        .insert-page button:hover {
             background-color: #0056b3;
         }
-    </style>
+      </style>
+      
 </body>
 </html>
 {% endblock %}
