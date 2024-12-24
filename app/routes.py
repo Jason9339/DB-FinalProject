@@ -195,9 +195,34 @@ def cinema_screenings(cinema_id):
 def my_list():
     favorite_movies = current_user.favorite_movies
     return render_template("my_list.html", favorite_movies=favorite_movies)
+from datetime import datetime, timedelta
+
+def insert_create_fixed_screening_times(movies, cinemas):
+    """Create fixed screening times for insert movie in choosen cinemas."""
+    screenings = []
+    fixed_times = [
+        datetime.now().replace(hour=10, minute=0),
+        datetime.now().replace(hour=14, minute=0),
+        datetime.now().replace(hour=18, minute=0),
+    ]
+    for i, movie in enumerate(movies):
+        for cinema in cinemas:
+            for hall in cinema.halls:  # Assuming each cinema has `halls` as an attribute
+                for time in fixed_times:
+                    screenings.append(
+                        ScreeningTime(
+                            movie_id=movie.id,
+                            cinema_id=cinema.id,
+                            hall_id=hall.id,
+                            date=time + timedelta(days=i % 7),
+                            price=300 + (i % 5) * 10,  # Adjust pricing logic as needed
+                        )
+                    )
+    return screenings
 
 @main.route('/insert', methods=['GET', 'POST'])
 def insert_movie():
+    global cinema_movies
     cinemas = [
     {"name": "大都會影城", "location": "台北市信義區"},
     {"name": "新光影城", "location": "台北市西門町"},
@@ -237,6 +262,16 @@ def insert_movie():
             if selected_cinema not in cinema_movies:
                 cinema_movies[selected_cinema] = []
             cinema_movies[selected_cinema].append(new_movie)
+                # Generate fixed screening times for the new movie
+        selected_cinemas = (
+            cinemas if selected_cinema == 'all'
+            else [cinema for cinema in cinemas if cinema["name"] == selected_cinema]
+        )
+        screenings = insert_create_fixed_screening_times([new_movie], selected_cinemas)
+
+        # Save the screenings to the database
+        db.session.add_all(screenings)
+        db.session.commit()
 
         return redirect(url_for('main.admin'))  # Redirect to admin page after successful insertion
     
@@ -246,8 +281,63 @@ def insert_movie():
 
 @main.route('/delete', methods=['GET', 'POST'])
 def delete_movie():
-    # Logic to handle deleting movies (if needed)
-    return render_template('delete.html')
+    # Fetch the list of cinemas and movies for the dropdown
+    cinemas = [
+        {"name": "大都會影城", "location": "台北市信義區"},
+        {"name": "新光影城", "location": "台北市西門町"},
+        {"name": "威秀影城", "location": "台北市信義區"},
+    ]
+    movies = Movie.query.all()  # Fetch all movies from the database
+
+    if request.method == 'POST':
+        # Get form data
+        selected_cinema = request.form.get('cinema')
+        movie_id = request.form.get('movie')
+
+        # Fetch the movie to be deleted
+        movie_to_delete = Movie.query.get(movie_id)
+
+        if not movie_to_delete:
+            flash("Movie not found", "error")
+            return redirect(url_for('main.delete_movie'))
+
+        # If "All" cinemas are selected
+        if selected_cinema == 'all':
+            # Remove the movie from all cinemas
+            for cinema_name in cinema_movies:
+                cinema_movies[cinema_name] = [
+                    movie for movie in cinema_movies[cinema_name]
+                    if movie.id != movie_to_delete.id
+                ]
+            
+            # Delete all associated screenings for the movie
+            ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).delete()
+
+            # Delete the movie from the database
+            db.session.delete(movie_to_delete)
+            db.session.commit()
+
+            flash(f"Movie '{movie_to_delete.title}' has been deleted from all cinemas.", "success")
+        else:
+            # Remove the movie from the specific cinema
+            cinema_movies[selected_cinema] = [
+                movie for movie in cinema_movies[selected_cinema]
+                if movie.id != movie_to_delete.id
+            ]
+
+            # Delete screenings for the movie only in the selected cinema
+            ScreeningTime.query.filter_by(
+                movie_id=movie_to_delete.id,
+                cinema_id=selected_cinema
+            ).delete()
+
+            db.session.commit()
+
+            flash(f"Movie '{movie_to_delete.title}' has been deleted from '{selected_cinema}'.", "success")
+
+        return redirect(url_for('main.delete_movie'))
+
+    return render_template('delete.html', cinemas=cinemas, movies=movies)
 
 
 @main.route('/update', methods=['GET', 'POST'])
