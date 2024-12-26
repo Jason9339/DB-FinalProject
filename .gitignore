@@ -10,7 +10,7 @@ env/
 .venv/
 
 # SQLite Database
-# *.db
+*.db
 *.sqlite3
 
 # Instance folder (if it contains sensitive configs)

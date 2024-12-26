@@ -7,9 +7,7 @@
   {% if movies %} {% for movie in movies %}
   <div class="movie {% if loop.last %}last{% endif %}">
     <div class="movie-image">
-      <span class="play"
-        ><span class="name">{{ movie.title|upper }}</span></span
-      >
+      <span class="name">{{ movie.title|upper }}</span>
       <a href="{{ url_for('main.movie_detail', movie_id=movie.id) }}">
         <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" />
       </a>
