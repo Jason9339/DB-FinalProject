@@ -8,7 +8,7 @@ block content %}
 <ul>
   {% for screening in screenings %}
   <li>
-    {{ screening.date }} at {{ screening.cinema.name }}
+    {{ screening.date }} at {{ screening.cinema.name }}, {{screening.hall.name}}
     <a href="{{ url_for('main.book_seat', screening_id=screening.id) }}"
       >Book Seat</a
     >
