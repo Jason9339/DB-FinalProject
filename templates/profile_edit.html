@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +23,37 @@
 
     h1 {
       margin-bottom: 20px;
+    }
+
+    .info-form {
+      margin-top: 20px;
+    }
+
+    .info-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .info-form input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .info-form button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .info-form button:hover {
+      background-color: #0056b3;
     }
 
     .status-form {
@@ -60,17 +91,17 @@
 <body>
   <div class="container">
     <h1>個人資料</h1>
-    <p><strong>用戶名:</strong> {{ current_user.username }}</p>
-    <p><strong>電子郵件:</strong> {{ current_user.email }}</p>
-    <p><strong>目前狀態:</strong> {{ current_user.status or "尚未設定狀態" }}</p>
+    
+    <!-- 用戶名輸入框 -->
+    <div class="info-form">
+      <label for="username">用戶名:</label>
+      <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+    </div>
 
-    <div class="status-form">
-      <h2>更新狀態</h2>
-      <form action="{{ url_for('main.update_status') }}" method="POST">
-        <label for="status">新的狀態:</label>
-        <input type="text" id="status" name="status" placeholder="輸入新的狀態" required>
-        <button type="submit">更新狀態</button>
-      </form>
+    <!-- 電子郵件輸入框 -->
+    <div class="info-form">
+      <label for="email">電子郵件:</label>
+      <input type="text" id="email" name="email" value="{{ current_user.email }}" required>
     </div>
   </div>
 </body>

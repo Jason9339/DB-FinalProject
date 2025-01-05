@@ -11,6 +11,12 @@ user_friends = db.Table(
     db.Column("user2_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
 )
 
+# 定義 user_favorites 中介表
+user_favorites = db.Table(
+    "user_favorites",
+    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
+    db.Column("movie_id", db.Integer, db.ForeignKey("movie.id"), primary_key=True),
+)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -18,21 +24,17 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     favorite_movies = db.relationship(
-        "Movie", secondary="user_favorites", backref="favorited_by"
+        "Movie",
+        secondary=user_favorites,  # 引用 user_favorites 表
+        backref=db.backref("favorited_by", lazy="dynamic"),
+        lazy="dynamic",
     )
+
     bookings = db.relationship("Booking", backref="user", lazy=True)
     reviews = db.relationship("Review", backref="user", lazy=True)
     friends = db.relationship(
         "User",
         secondary=user_friends,  # 使用已定義的 user_friends
-        primaryjoin=(id == user_friends.c.user1_id),
-        secondaryjoin=(id == user_friends.c.user2_id),
-        backref=db.backref("friendship", lazy="dynamic"),
-    )
-    
-    friends = db.relationship(
-        "User",
-        secondary=user_friends,
         primaryjoin=(id == user_friends.c.user1_id),
         secondaryjoin=(id == user_friends.c.user2_id),
         backref=db.backref("friendship", lazy="dynamic"),
@@ -54,7 +56,6 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -149,27 +150,6 @@ class Seat(db.Model):
     )
     seat_number = db.Column(db.String(10), nullable=False)
     is_available = db.Column(db.Boolean, default=True, nullable=False)
-
-
-user_favorites = db.Table(
-    "user_favorites",
-    db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
-    db.Column("movie_id", db.Integer, db.ForeignKey("movie.id"), primary_key=True),
-)
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-
-    favorite_movies = db.relationship(
-        "Movie",
-        secondary="user_favorites",  # 指向中介表的名稱
-        backref=db.backref("fans", lazy="dynamic"),
-        lazy="dynamic",
-    )
-
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, user_favorites
 from app.forms import RegistrationForm, LoginForm, BookingForm
 
 main = Blueprint("main", __name__)
@@ -244,3 +244,8 @@ def accept_friend_request():
     if not friend_requests[user_id]:
         del friend_requests[user_id]
     return jsonify({'message': f'你已接受來自 {users[user_id]} 的好友邀請'}), 200
+
+@main.route("/profile/edit")
+@login_required
+def profile_edit():
+    return render_template("profile_edit.html")  # Create the profile_edit.html page
