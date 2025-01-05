@@ -70,6 +70,32 @@
       color: #fff;
     }
 
+    .toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 10px;
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1;
+      font-size: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  
+    .toast.show {
+      visibility: visible;
+      animation: fadeInOut 4s ease;
+    }
+  
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      10%, 90% { opacity: 1; }
+    }
+
     /* Main Content */
     .main-content {
       width: 50%;
@@ -104,6 +130,33 @@
       height: auto;
       border-radius: 8px;
       margin-top: 10px;
+    }
+
+    .search-user {
+      margin: 20px 0;
+      text-align: center;
+    }
+  
+    .search-user input {
+      padding: 10px;
+      width: 200px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  
+    .search-user button {
+      padding: 10px 15px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  
+    .search-user button:hover {
+      background-color: #0056b3;
     }
 
     /* Right Sidebar */
@@ -189,6 +242,10 @@
     </div>
 
     <!-- Right Sidebar -->
+    <div class="search-user">
+      <input type="text" id="searchUserId" placeholder="輸入 User ID">
+      <button onclick="sendFriendRequest()">發送好友邀請</button>
+    </div>
     <div class="right-sidebar">
       <h3>即將上映的電影</h3>
       {% for movie in upcoming_movies %}
@@ -207,5 +264,51 @@
       {% endfor %}
     </div>
   </div>
+  <div id="toast" class="toast">已成功加入好友！</div>
 </body>
 </html>
+
+<script>
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message; // 設定顯示的訊息
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 4000); // 4 秒後自動隱藏
+  }
+
+  // 示例：模擬成功加入好友後顯示提示
+  function addFriend() {
+    // 模擬好友加入成功的操作
+    showToast('已成功加入好友！');
+  }
+
+  async function sendFriendRequest() {
+    const userId = document.getElementById('searchUserId').value.trim();
+    if (!userId) {
+      alert('請輸入有效的 User ID');
+      return;
+    }
+
+    try {
+      const response = await fetch('/send-friend-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert(result.message); // 顯示成功訊息
+      } else {
+        alert(`錯誤: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('發送好友邀請失敗:', error);
+      alert('發送好友邀請時出現問題，請稍後再試。');
+    }
+  }
+</script>

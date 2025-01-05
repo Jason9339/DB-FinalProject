@@ -212,3 +212,35 @@ def add_friend():
             flash(f"You are now friends with {friend.username}!", "success")
         return redirect(url_for("add_friend"))
     return render_template("add_friend.html", form=form)
+
+@main.route('/send-friend-request', methods=['POST'])
+def send_friend_request():
+    data = request.json
+    user_id = data.get('user_id')
+    if user_id not in users:
+        return jsonify({'error': 'User not found'}), 404
+    # 假設 current_user 是已登入用戶的 ID
+    current_user = '123'
+    if user_id == current_user:
+        return jsonify({'error': '不能添加自己為好友'}), 400
+    # 新增好友邀請
+    friend_requests.setdefault(user_id, []).append(current_user)
+    return jsonify({'message': f'好友邀請已發送給 {users[user_id]}'}), 200
+
+@main.route('/accept-friend-request', methods=['POST'])
+def accept_friend_request():
+    data = request.json
+    user_id = data.get('user_id')
+    # 假設 current_user 是已登入用戶的 ID
+    current_user = '123'
+    if user_id not in friend_requests or current_user not in friend_requests[user_id]:
+        return jsonify({'error': '無效的好友邀請'}), 404
+    # 接受好友邀請（假設有一個 friends 資料結構）
+    friends = {current_user: []}  # 模擬的好友列表
+    friends.setdefault(current_user, []).append(user_id)
+    friends.setdefault(user_id, []).append(current_user)
+    # 移除好友邀請
+    friend_requests[user_id].remove(current_user)
+    if not friend_requests[user_id]:
+        del friend_requests[user_id]
+    return jsonify({'message': f'你已接受來自 {users[user_id]} 的好友邀請'}), 200
