@@ -133,7 +133,7 @@
     }
 
     .search-user {
-      margin: 20px 0;
+      margin: 20px;
       text-align: center;
     }
   
@@ -224,29 +224,31 @@
         </div>
       </div>
     </div>
-
+  
     <!-- Main Content -->
     <div class="main-content">
-      <!-- 用戶最近的文章 -->
       <article class="post">
         <h3>董座豪宅必備私人電影院</h3>
         <p>私人電影院設施不僅能提升董座家庭的娛樂品味，也讓家人能在繁忙的工作與生活中找到放鬆與享受的空間。從設計到選擇設備，每個環節都必須精心規劃，以確保家庭成員在居家影院中獲得最極致的娛樂體驗。</p>
         <img src="{{ url_for('static', filename='images/article1.png') }}" alt="文章圖片 1">
       </article>
-
+  
       <article class="post">
         <h3>「映台北」影展</h3>
-        <p>映台北」影展，透過六部與台北相關的經典電影，佈置限定版復古場景，讓你穿越時光回到過去的年代，還可以在館內尋寶就有機會拿到限量「映台北帆布提袋」。</p>
-        <img src="{{ url_for('static', filename='images/article2.png') }}" alt="文章圖片 1">
+        <p>「映台北」影展，透過六部與台北相關的經典電影，佈置限定版復古場景，讓你穿越時光回到過去的年代，還可以在館內尋寶就有機會拿到限量「映台北帆布提袋」。</p>
+        <img src="{{ url_for('static', filename='images/article2.png') }}" alt="文章圖片 2">
       </article>
     </div>
-
+  
     <!-- Right Sidebar -->
-    <div class="search-user">
-      <input type="text" id="searchUserId" placeholder="輸入 User ID">
-      <button onclick="sendFriendRequest()">發送好友邀請</button>
-    </div>
     <div class="right-sidebar">
+      <!-- 搜尋用戶 -->
+      <div class="search-user">
+        <input type="text" id="searchUserId" placeholder="輸入 User ID">
+        <button onclick="sendFriendRequest()">發送好友邀請</button>
+      </div>
+  
+      <!-- 即將上映的電影 -->
       <h3>即將上映的電影</h3>
       {% for movie in upcoming_movies %}
       <div class="movie">
@@ -254,7 +256,8 @@
         <p>{{ movie.release_date.strftime('%Y-%m-%d') }}</p>
       </div>
       {% endfor %}
-
+  
+      <!-- 已預定的電影 -->
       <h3>已預定的電影</h3>
       {% for movie in reserved_movies %}
       <div class="movie">
@@ -263,8 +266,7 @@
       </div>
       {% endfor %}
     </div>
-  </div>
-  <div id="toast" class="toast">已成功加入好友！</div>
+  </div>  
 </body>
 </html>
 
