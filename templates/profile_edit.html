@@ -55,54 +55,22 @@
     .info-form button:hover {
       background-color: #0056b3;
     }
-
-    .status-form {
-      margin-top: 20px;
-    }
-
-    .status-form label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    .status-form input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-
-    .status-form button {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .status-form button:hover {
-      background-color: #0056b3;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>個人資料</h1>
     
-    <!-- 用戶名輸入框 -->
-    <div class="info-form">
+    <!-- 用戶名和電子郵件表單 -->
+    <form class="info-form" action="{{ url_for('main.update_profile') }}" method="POST">
       <label for="username">用戶名:</label>
       <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
-    </div>
-
-    <!-- 電子郵件輸入框 -->
-    <div class="info-form">
+      
       <label for="email">電子郵件:</label>
       <input type="text" id="email" name="email" value="{{ current_user.email }}" required>
-    </div>
+      
+      <button type="submit">提交</button>
+    </form>
   </div>
 </body>
 </html>

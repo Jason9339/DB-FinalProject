@@ -160,20 +160,30 @@ def my_list():
     favorite_movies = current_user.favorite_movies
     return render_template("my_list.html", favorite_movies=favorite_movies)
 
-@main.route('/update_status', methods=['POST'])
+@main.route('/update-profile', methods=['POST'])
 @login_required
-def update_status():
-    status = request.form.get('status')
-    current_user.status = status
-    db.session.commit()
-    flash('狀態更新成功！', 'success')
-    return redirect(url_for('main.profile')) 
+def update_profile():
+    new_username = request.form.get('username')
+    new_email = request.form.get('email')
+
+    # 更新用戶資料
+    current_user.username = new_username
+    current_user.email = new_email
+    try:
+        db.session.commit()
+        flash('資料已成功更新！', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('更新失敗，請稍後再試。', 'danger')
+        print(f"更新錯誤: {e}")
+
+    return redirect(url_for('main.profile'))
+
 
 @main.route('/profile')
 @login_required
 def profile():
-    upcoming_movies = Movie.query.filter(Movie.is_current == False).order_by(Movie.release_date).all()
-    return render_template('profile.html', user=current_user, upcoming_movies=upcoming_movies)
+    return render_template('profile.html', user=current_user)
 
 @main.route('/favorite_movies')
 @login_required
