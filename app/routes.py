@@ -238,11 +238,23 @@ def send_friend_request():
     data = request.json
     receiver_uid = data.get('uid')
     
+    # 防止用户向自己发送好友请求
+    if sender_id == receiver_uid:
+        return jsonify({'error': '不能向自己发送好友邀请'}), 300
+    
     # 查找接收者用户
     receiver = User.query.filter_by(id=receiver_uid).first()
     if not receiver:
-        return jsonify({'error': '用戶不存在'}), 400
+        return jsonify({'error': '用户不存在'}), 400
     
+    existing_friendship = Friend.query.filter(
+        (Friend.user_id == sender_id) & (Friend.friend_id == receiver.id) |
+        (Friend.user_id == receiver.id) & (Friend.friend_id == sender_id)
+    ).first()
+
+    if existing_friendship:
+        return jsonify({'error': '你們已经是好友'}), 300
+
     # 检查是否已经存在未处理的好友邀请
     existing_request = FriendRequest.query.filter_by(
         sender_id=sender_id,
@@ -251,7 +263,19 @@ def send_friend_request():
     ).first()
     
     if existing_request:
-        return jsonify({'error': '好友邀請已發送'}), 400
+        return jsonify({'error': '好友邀请已发送'}), 300
+    
+    # 创建新的好友邀请
+    new_request = FriendRequest(
+        sender_id=sender_id,
+        receiver_id=receiver.id,
+        status='pending'
+    )
+    db.session.add(new_request)
+    db.session.commit()
+    
+    return jsonify({'message': '好友邀请已发送'}), 200
+
     
     # 创建新的好友邀请
     new_request = FriendRequest(
