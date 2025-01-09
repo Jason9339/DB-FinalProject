@@ -122,16 +122,15 @@ def search():
         movies = []
     return render_template("search_results.html", movies=movies, query=query)
 
-global cinema_movies
 @main.route("/admin", endpoint="admin_dashboard")
 @login_required
 def admin_dashboard():
-    # 確認是否為管理員
+    # Ensure only admin users can access this route
     if current_user.username != "admin":
         flash("Access denied. Admins only.", "danger")
         return redirect(url_for("main.home"))
 
-    # Fetch all cinemas
+    # Fetch all cinemas and group movies by cinema
     cinemas = Cinema.query.all()
     cinema_movies = {}
     for cinema in cinemas:
@@ -141,8 +140,7 @@ def admin_dashboard():
             for screening in screening_times
             if screening.movie.is_current
         }
-        cinema_movies[cinema] = list(movies)
-
+        cinema_movies[cinema.name] = list(movies)
     return render_template("admin.html", cinema_movies=cinema_movies)
 
 
@@ -222,20 +220,25 @@ def insert_create_fixed_screening_times(movies, cinemas):
 
 @main.route('/insert', methods=['GET', 'POST'])
 def insert_movie():
-    global cinema_movies
-    cinemas = [
-    {"name": "大都會影城", "location": "台北市信義區"},
-    {"name": "新光影城", "location": "台北市西門町"},
-    {"name": "威秀影城", "location": "台北市信義區"},
-    ]
+    # Fetch all cinemas
+    cinemas = Cinema.query.all()
+    cinema_movies = {}
+    for cinema in cinemas:
+        screening_times = ScreeningTime.query.filter_by(cinema_id=cinema.id).all()
+        movies = {
+            screening.movie
+            for screening in screening_times
+            if screening.movie.is_current
+        }
+        cinema_movies[cinema.name] = list(movies)
+
     if request.method == 'POST':
         # Handle form submission
         title = request.form.get('title')
         description = request.form.get('description')
         genre = request.form.get('genre')
-        release_date = +request.form.get('release_date')
-        poster_url = '/static/images/'+request.form.get('poster_url')
-        rating = 0
+        release_date = request.form.get('release_date')
+        poster_url = f"/static/images/{request.form.get('poster_url', '').strip()}"
         is_current = request.form.get('is_current') == 'true'
         selected_cinema = request.form.get('cinema')  # Get the selected cinema
 
@@ -250,33 +253,43 @@ def insert_movie():
             is_current=is_current
         )
 
-        # Update the cinema_movies dictionary
-        if selected_cinema == 'all':
-            # Add the movie to all cinemas
-            for cinema in cinemas:
-                if cinema["name"] not in cinema_movies:
-                    cinema_movies[cinema["name"]] = []
-                cinema_movies[cinema["name"]].append(new_movie)
-        else:
-            # Add the movie to the selected cinema only
-            if selected_cinema not in cinema_movies:
-                cinema_movies[selected_cinema] = []
-            cinema_movies[selected_cinema].append(new_movie)
-                # Generate fixed screening times for the new movie
+        # Save the new movie to the database to generate its ID
+        db.session.add(new_movie)
+        db.session.commit()  # Commit to assign an ID to new_movie
+
+        # Generate fixed screening times for the new movie
         selected_cinemas = (
             cinemas if selected_cinema == 'all'
-            else [cinema for cinema in cinemas if cinema["name"] == selected_cinema]
+            else [cinema for cinema in cinemas if cinema.name == selected_cinema]
         )
-        screenings = insert_create_fixed_screening_times([new_movie], selected_cinemas)
+
+        screenings = []
+        fixed_times = [
+            datetime.now().replace(hour=10, minute=0, second=0, microsecond=0),
+            datetime.now().replace(hour=14, minute=0, second=0, microsecond=0),
+            datetime.now().replace(hour=18, minute=0, second=0, microsecond=0),
+        ]
+        for cinema in selected_cinemas:
+            for hall in cinema.halls:
+                for time in fixed_times:
+                    screenings.append(
+                        ScreeningTime(
+                            movie_id=new_movie.id,  # Use the ID of the committed movie
+                            cinema_id=cinema.id,
+                            hall_id=hall.id,
+                            date=time,
+                            price=300  # Set a fixed price
+                        )
+                    )
 
         # Save the screenings to the database
         db.session.add_all(screenings)
         db.session.commit()
 
-        return redirect(url_for('main.admin'))  # Redirect to admin page after successful insertion
-    
+        return redirect(url_for('main.admin_dashboard'))  # Redirect to admin page after successful insertion
+
     # Render the insert.html template for GET requests
-    return render_template('insert.html',cinemas=cinemas)
+    return render_template('insert.html', cinemas=cinemas, cinema_movies=cinema_movies)
 
 
 @main.route('/delete', methods=['GET', 'POST'])
