@@ -287,7 +287,7 @@
       
         // 發送好友邀請
         function sendFriendRequest() {
-          const uid = document.getElementById('friend-uid').value;  // 獲取用戶輸入的 UID
+          const uid = document.getElementById('searchUserId').value;  // 獲取用戶輸入的 UID
         
           fetch('/send-friend-request', {
             method: 'POST',

@@ -231,34 +231,51 @@ def my_reviews():
 @main.route('/send-friend-request', methods=['POST'])
 @login_required
 def send_friend_request():
-    sender_id = session['user_id']
-    data=request.json
-    receiver_id = data.get('uid')
+    # 使用 current_user 获取发送者 ID
+    sender_id = current_user.id
     
-    receiver = User.query.filter_by(uid=receiver_id).first()
+    # 从请求中获取接收者的 UID
+    data = request.json
+    receiver_uid = data.get('uid')
+    
+    # 查找接收者用户
+    receiver = User.query.filter_by(id=receiver_uid).first()
     if not receiver:
         return jsonify({'error': '用户不存在'}), 400
     
-    # 检查是否已存在未处理的邀请
-    existing_request = FriendRequest.query.filter_by(sender_id=sender_id, receiver_id=receiver_id, status='pending').first()
-    if existing_request:
-        return jsonify({'error': '好友邀请已發送過'}), 400
+    # 检查是否已经存在未处理的好友邀请
+    existing_request = FriendRequest.query.filter_by(
+        sender_id=sender_id,
+        receiver_id=receiver.id,
+        status='pending'
+    ).first()
     
-    # 创建新邀请
-    new_request = FriendRequest(sender_id=sender_id, receiver_id=receiver_id, status='pending')
+    if existing_request:
+        return jsonify({'error': '好友邀请已发送过'}), 400
+    
+    # 创建新的好友邀请
+    new_request = FriendRequest(
+        sender_id=sender_id,
+        receiver_id=receiver.id,
+        status='pending'
+    )
     db.session.add(new_request)
     db.session.commit()
+    
     return jsonify({'message': '好友邀请已发送'}), 200
 
 @main.route('/get-friend-requests', methods=['GET'])
 @login_required
 def get_friend_requests():
-    # 获取当前登录用户的 ID
-    current_user_id = current_user.id  # 使用 Flask-Login 提供的 current_user 来获取用户 ID
-
+    # 使用 current_user 获取当前登录用户的 ID
+    current_user_id = current_user.id
+    
     # 查询当前用户收到的好友邀请，状态为 pending
-    friend_requests = FriendRequest.query.filter_by(receiver_id=current_user_id, status='pending').all()
-
+    friend_requests = FriendRequest.query.filter_by(
+        receiver_id=current_user_id,
+        status='pending'
+    ).all()
+    
     # 构建返回数据
     data = [
         {
@@ -268,11 +285,8 @@ def get_friend_requests():
         }
         for request in friend_requests
     ]
-
+    
     return jsonify({'requests': data}), 200
-
-#處理接受或拒絕
-from flask import flash
 
 @main.route('/respond-friend-request', methods=['POST'])
 def respond_friend_request():
