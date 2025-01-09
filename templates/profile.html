@@ -265,15 +265,6 @@
       
       <div id="toast" class="toast"></div>
       
-      <!-- 已預定的電影 -->
-      <h3>已預定的電影</h3>
-      {% for movie in reserved_movies %}
-      <div class="movie">
-        <p><strong>{{ movie.title }}</strong></p>
-        <p>{{ movie.showtime.strftime('%Y-%m-%d %H:%M') }}</p>
-      </div>
-      {% endfor %}
-      
       <script>
         // 顯示 Toast 提示
         function showToast(message) {
