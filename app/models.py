@@ -3,7 +3,7 @@ from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
-
+from datetime import datetime
 
 user_friends = db.Table(
     "user_friends",
@@ -19,7 +19,7 @@ user_favorites = db.Table(
 )
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
     reviews = db.relationship("Review", backref="user", lazy=True)
     friends = db.relationship(
         "User",
-        secondary=user_friends,  # 使用已定義的 user_friends
+        secondary=user_friends, 
         primaryjoin=(id == user_friends.c.user1_id),
         secondaryjoin=(id == user_friends.c.user2_id),
         backref=db.backref("friendship", lazy="dynamic"),
@@ -57,6 +57,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    @classmethod
+    def get_user_by_username(username):
+        return User.query.filter_by(username=username).first()
+    
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -150,6 +154,22 @@ class Seat(db.Model):
     )
     seat_number = db.Column(db.String(10), nullable=False)
     is_available = db.Column(db.Boolean, default=True, nullable=False)
+
+
+class Friend(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    friend_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('friends_as_user', lazy='dynamic'))
+    friend = db.relationship('User', foreign_keys=[friend_id], backref=db.backref('friends_as_friend', lazy='dynamic'))
+class FriendRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending')  # 状态：pending, accepted, rejected
+    sender = db.relationship('User', foreign_keys=[sender_id])
+    receiver = db.relationship('User', foreign_keys=[receiver_id])
 
 @login_manager.user_loader
 def load_user(user_id):

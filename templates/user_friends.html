@@ -3,21 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Friends</title>
+    <title>我的好友</title>
 </head>
 <body>
-    <h1>My Friends</h1>
-    {% if friends %}
-        <ul>
-            {% for friend in friends %}
-                <li>
-                    <strong>{{ friend.username }}</strong> 
-                    (Email: {{ friend.email }})
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>You have no friends added yet.</p>
-    {% endif %}
+    <h1>我的好友</h1>
+    <ul>
+        {% for friend in friends %}
+            <li>{{ friend.username }}</li>  <!-- 直接访问 friend.username -->
+        {% endfor %}
+    </ul>
 </body>
 </html>

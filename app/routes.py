@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, user_favorites
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend
 from app.forms import RegistrationForm, LoginForm, BookingForm
+from .models import User, FriendRequest
+from flask import jsonify
+from flask import session
+
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
@@ -90,13 +94,12 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
-            login_user(user)
+            login_user(user)  # 自动处理 session
             next_page = request.args.get("next")
             return redirect(next_page) if next_page else redirect(url_for("main.home"))
         else:
             flash("Login unsuccessful. Please check email and password", "danger")
     return render_template("login.html", form=form)
-
 
 @auth.route("/logout")
 @login_required
@@ -180,24 +183,44 @@ def update_profile():
     return redirect(url_for('main.profile'))
 
 
-@main.route('/profile')
+@main.route('/profile', defaults={'username': None})
+@main.route('/profile/<username>')
 @login_required
-def profile():
-    return render_template('profile.html', user=current_user)
+def profile(username):
+    if username:  # 如果 URL 中有 username，顯示該用戶的資料
+        user = get_user_by_username(username)  # 查找該用戶信息
+        if not user:
+            # 如果找不到該用戶，返回 404 錯誤
+            return render_template('404.html'), 404
+        # 傳遞該用戶收到的好友邀請
+        received_requests = FriendRequest.query.filter_by(receiver_id=current_user.id, status='pending').all()
+        return render_template('profile.html', user=user, friend_requests=received_requests)
 
-@main.route('/favorite_movies')
-@login_required
-def favorite_movies():
-    favorite_movie_ids = db.session.query(user_favorites.c.movie_id).filter_by(user_id=current_user.id).all()
-    favorite_movie_ids = [movie_id[0] for movie_id in favorite_movie_ids]  
-    movies = Movie.query.filter(Movie.id.in_(favorite_movie_ids)).all()
-    return render_template('favorite_movies.html', movies=movies)
-
+    # 如果沒有提供 username，則顯示當前登入用戶的資料
+    user = current_user  # 當前登入用戶
+    # 傳遞當前用戶收到的好友邀請
+    received_requests = FriendRequest.query.filter_by(receiver_id=current_user.id, status='pending').all()
+    return render_template('profile.html', user=user, friend_requests=received_requests)
 @main.route('/user_friends')
 @login_required
 def user_friends():
-    user_friends = current_user.friends  # 需要確保 User 模型有這個屬性
-    return render_template('user_friends.html', friends=user_friends)
+    # 获取当前用户的所有好友关系
+    user_friends = Friend.query.filter(
+        (Friend.user_id == current_user.id) | (Friend.friend_id == current_user.id)
+    ).all()
+
+    # 将好友关系分为 user 和 friend，并去重
+    friends_set = set()
+    for friend in user_friends:
+        if friend.user_id == current_user.id:
+            friends_set.add(friend.friend)
+        else:
+            friends_set.add(friend.user)
+
+    # 转换为列表
+    friends_list = list(friends_set)
+
+    return render_template('user_friends.html', friends=friends_list)
 
 @main.route('/my_reviews')
 @login_required
@@ -205,55 +228,91 @@ def my_reviews():
     reviews = current_user.reviews  # 假設 User 模型有 comments 屬性
     return render_template('my_reviews.html', reviews=reviews)
 
-@main.route("/add_friend", methods=["GET", "POST"])
-@login_required
-def add_friend():
-    form = AddFriendForm()
-    if form.validate_on_submit():
-        friend = User.query.filter_by(email=form.friend_email.data).first()
-        if not friend:
-            flash("User not found", "error")
-            return redirect(url_for("add_friend"))
-        if current_user.is_friend(friend):
-            flash("You are already friends with this user", "info")
-        else:
-            current_user.add_friend(friend)
-            db.session.commit()
-            flash(f"You are now friends with {friend.username}!", "success")
-        return redirect(url_for("add_friend"))
-    return render_template("add_friend.html", form=form)
-
 @main.route('/send-friend-request', methods=['POST'])
+@login_required
 def send_friend_request():
-    data = request.json
-    user_id = data.get('user_id')
-    if user_id not in users:
-        return jsonify({'error': 'User not found'}), 404
-    # 假設 current_user 是已登入用戶的 ID
-    current_user = '123'
-    if user_id == current_user:
-        return jsonify({'error': '不能添加自己為好友'}), 400
-    # 新增好友邀請
-    friend_requests.setdefault(user_id, []).append(current_user)
-    return jsonify({'message': f'好友邀請已發送給 {users[user_id]}'}), 200
+    sender_id = session['user_id']
+    data=request.json
+    receiver_id = data.get('uid')
+    
+    receiver = User.query.filter_by(uid=receiver_id).first()
+    if not receiver:
+        return jsonify({'error': '用户不存在'}), 400
+    
+    # 检查是否已存在未处理的邀请
+    existing_request = FriendRequest.query.filter_by(sender_id=sender_id, receiver_id=receiver_id, status='pending').first()
+    if existing_request:
+        return jsonify({'error': '好友邀请已發送過'}), 400
+    
+    # 创建新邀请
+    new_request = FriendRequest(sender_id=sender_id, receiver_id=receiver_id, status='pending')
+    db.session.add(new_request)
+    db.session.commit()
+    return jsonify({'message': '好友邀请已发送'}), 200
 
-@main.route('/accept-friend-request', methods=['POST'])
-def accept_friend_request():
+@main.route('/get-friend-requests', methods=['GET'])
+@login_required
+def get_friend_requests():
+    # 获取当前登录用户的 ID
+    current_user_id = current_user.id  # 使用 Flask-Login 提供的 current_user 来获取用户 ID
+
+    # 查询当前用户收到的好友邀请，状态为 pending
+    friend_requests = FriendRequest.query.filter_by(receiver_id=current_user_id, status='pending').all()
+
+    # 构建返回数据
+    data = [
+        {
+            'id': request.id,
+            'sender_id': request.sender_id,
+            'sender_username': User.query.get(request.sender_id).username  # 获取发送者的用户名
+        }
+        for request in friend_requests
+    ]
+
+    return jsonify({'requests': data}), 200
+
+#處理接受或拒絕
+from flask import flash
+
+@main.route('/respond-friend-request', methods=['POST'])
+def respond_friend_request():
     data = request.json
-    user_id = data.get('user_id')
-    # 假設 current_user 是已登入用戶的 ID
-    current_user = '123'
-    if user_id not in friend_requests or current_user not in friend_requests[user_id]:
-        return jsonify({'error': '無效的好友邀請'}), 404
-    # 接受好友邀請（假設有一個 friends 資料結構）
-    friends = {current_user: []}  # 模擬的好友列表
-    friends.setdefault(current_user, []).append(user_id)
-    friends.setdefault(user_id, []).append(current_user)
-    # 移除好友邀請
-    friend_requests[user_id].remove(current_user)
-    if not friend_requests[user_id]:
-        del friend_requests[user_id]
-    return jsonify({'message': f'你已接受來自 {users[user_id]} 的好友邀請'}), 200
+    request_id = data.get('request_id')
+    action = data.get('action')  # 'accept' 或 'reject'
+
+    # 验证好友邀请是否存在
+    friend_request = FriendRequest.query.get(request_id)
+    if not friend_request:
+        return jsonify({'error': '好友邀请不存在'}), 404
+
+    # 确认当前用户是接收者
+    current_user_id = current_user.id
+    if friend_request.receiver_id != current_user_id:
+        return jsonify({'error': '无权操作此好友邀请'}), 403
+
+    # 根据 action 执行相应操作
+    if action == 'accept':
+        # 更新好友邀请状态
+        friend_request.status = 'accepted'
+
+        # 添加到好友列表
+        from app.models import Friend  # 确保导入 Friend 模型
+        # 添加互为好友
+        db.session.add(Friend(user_id=friend_request.sender_id, friend_id=friend_request.receiver_id))
+        db.session.add(Friend(user_id=friend_request.receiver_id, friend_id=friend_request.sender_id))
+
+        db.session.commit()
+
+        # 使用 flash 显示提示信息
+        flash(f"你已与 {friend_request.sender.username} 成为好友！", "success")
+    elif action == 'reject':
+        # 更新好友邀请状态
+        friend_request.status = 'rejected'
+    else:
+        return jsonify({'error': '无效的操作'}), 400
+
+    db.session.commit()
+    return jsonify({'message': f'好友邀请已{action}'}), 200
 
 @main.route("/profile/edit")
 @login_required

@@ -204,6 +204,7 @@
       <div class="profile-info">
         <h2>{{ user.username }}</h2>
         <p>{{ user.email }}</p>
+        <p>UID:{{ user.id}}</p>
       </div>
       <!-- 菜單 -->
       <div class="menu">
@@ -218,7 +219,7 @@
           </button>
         </div>
         <div class="favorite-movie-btn">
-          <button onclick="window.location.href='{{ url_for('main.favorite_movies') }}'">
+          <button onclick="window.location.href='{{ url_for('main.my_list') }}'">
             收藏電影
           </button>
         </div>
@@ -247,21 +248,23 @@
   
     <!-- Right Sidebar -->
     <div class="right-sidebar">
+      <div class="friend-requests-section">
+        <h3>收到的好友邀请</h3>
+        <ul id="friend-requests">
+        <!-- 动态加载好友邀请 -->
+        </ul>
+      </div>
+      
+
       <!-- 搜尋用戶 -->
       <div class="search-user">
+        <label for="searchUserId" style="display:block; margin-bottom: 8px; font-weight: bold;">發送好友邀請</label>
         <input type="text" id="searchUserId" placeholder="輸入 User ID">
         <button onclick="sendFriendRequest()">發送好友邀請</button>
       </div>
-  
-      <!-- 即將上映的電影 -->
-      <h3>即將上映的電影</h3>
-      {% for movie in upcoming_movies %}
-      <div class="movie">
-        <p><strong>{{ movie.title }}</strong></p>
-        <p>{{ movie.release_date.strftime('%Y-%m-%d') }}</p>
-      </div>
-      {% endfor %}
-  
+      
+      <div id="toast" class="toast"></div>
+      
       <!-- 已預定的電影 -->
       <h3>已預定的電影</h3>
       {% for movie in reserved_movies %}
@@ -270,52 +273,94 @@
         <p>{{ movie.showtime.strftime('%Y-%m-%d %H:%M') }}</p>
       </div>
       {% endfor %}
-    </div>
-  </div>  
-</body>
-</html>
-
-<script>
-  function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message; // 設定顯示的訊息
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 4000); // 4 秒後自動隱藏
-  }
-
-  // 示例：模擬成功加入好友後顯示提示
-  function addFriend() {
-    // 模擬好友加入成功的操作
-    showToast('已成功加入好友！');
-  }
-
-  async function sendFriendRequest() {
-    const userId = document.getElementById('searchUserId').value.trim();
-    if (!userId) {
-      alert('請輸入有效的 User ID');
-      return;
-    }
-
-    try {
-      const response = await fetch('/send-friend-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: userId })
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        alert(result.message); // 顯示成功訊息
-      } else {
-        alert(`錯誤: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('發送好友邀請失敗:', error);
-      alert('發送好友邀請時出現問題，請稍後再試。');
-    }
-  }
-</script>
+      
+      <script>
+        // 顯示 Toast 提示
+        function showToast(message) {
+          const toast = document.getElementById('toast');
+          toast.textContent = message; // 設定顯示的訊息
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 4000); // 4 秒後自動隱藏
+        }
+      
+        // 發送好友邀請
+        function sendFriendRequest() {
+          const uid = document.getElementById('friend-uid').value;  // 獲取用戶輸入的 UID
+        
+          fetch('/send-friend-request', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'  // 設置請求頭部為 JSON 格式
+            },
+            body: JSON.stringify({ uid: uid })  // 將 UID 包裝為 JSON 格式
+          })
+          .then(response => response.json())  // 解析回應的 JSON 數據
+          .then(data => {
+            if (data.message) {
+              showToast(data.message);  // 顯示成功的提示信息
+            } else if (data.error) {
+              showToast(data.error);  // 顯示錯誤的提示信息
+            }
+          })
+          .catch(error => {
+            console.error('發送好友邀請失敗:', error);
+            showToast('發送好友邀請時出現錯誤');
+          });
+        }
+  
+        function loadFriendRequests() {
+          fetch('/get-friend-requests',{
+            method: 'GET',
+            credentials: 'include', 
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('请求失败，状态码：' + response.status);
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log(data);
+              const requestList = document.getElementById('friend-requests');
+              requestList.innerHTML = ''; // 清空现有内容
+              if (data.requests && data.requests.length > 0) {
+                data.requests.forEach(request => {
+                  const li = document.createElement('li');
+                  li.innerHTML = `
+                    <span>${request.sender_username} 想成为你的好友</span>
+                    <button onclick="respondFriendRequest(${request.id}, 'accept')">接受</button>
+                    <button onclick="respondFriendRequest(${request.id}, 'reject')">拒绝</button>
+                ` ;
+                  requestList.appendChild(li);
+                });
+                } else {
+                  requestList.innerHTML = '<li>暂无好友邀请</li>';
+                }
+              })
+              .catch(error => {
+                console.error('加载好友邀请失败:', error);
+              });
+          }
+      
+        // 响应好友邀请
+        function respondFriendRequest(requestId, action) {
+          fetch('/respond-friend-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, action: action })
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message || data.error);
+            loadFriendRequests(); // 更新好友邀请列表
+          })
+          .catch(error => {
+            console.error('处理好友邀请失败:', error);
+          });
+        }
+      
+        // 页面加载时自动加载好友邀请
+        document.addEventListener('DOMContentLoaded', loadFriendRequests);
+      </script>
