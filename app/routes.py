@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from .models import User, FriendRequest
 from flask import jsonify
 from flask import session
-
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
@@ -227,6 +226,25 @@ def user_friends():
 def my_reviews():
     reviews = current_user.reviews  # 假設 User 模型有 comments 屬性
     return render_template('my_reviews.html', reviews=reviews)
+
+@main.route('/delete-review/<int:review_id>', methods=['POST'])
+def delete_review(review_id):
+    # 查找該條評論
+    review = Review.query.get(review_id)
+    
+    if review:
+        # 檢查是否是當前用戶的評論
+        if review.user_id == current_user.id:
+            db.session.delete(review)  # 刪除評論
+            db.session.commit()  # 提交變更
+            flash('Review deleted successfully!', 'success')
+        else:
+            flash('You do not have permission to delete this review.', 'error')
+    else:
+        flash('Review not found!', 'error')
+
+    # 重定向回 "我的評論" 頁面
+    return redirect(url_for('main.my_reviews'))
 
 @main.route('/send-friend-request', methods=['POST'])
 @login_required

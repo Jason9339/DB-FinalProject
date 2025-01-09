@@ -146,7 +146,6 @@ class Review(db.Model):
 event.listen(Review, 'after_insert', Review.after_insert)
 event.listen(Review, 'after_delete', Review.after_delete)
 
-
 class Seat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     screening_id = db.Column(

@@ -9,9 +9,55 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f5f5f5;
+      background-color: #121212;
+      color: #ffffff;
     }
 
+    /* Header Section */
+    .header {
+      background-image: url('https://via.placeholder.com/1200x300'); /* 替換為範例圖片URL */
+      background-size: cover;
+      background-position: center;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Navigation */
+    .nav {
+      background: #1e1e1e;
+      padding: 10px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav a {
+      color: #ffffff;
+      text-decoration: none;
+      margin: 0 15px;
+      font-size: 16px;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+
+    .nav a:hover {
+      color: #007bff;
+    }
+
+    .nav a.active {
+      color: #ff4d4d; /* 紅色表示當前頁面 */
+    }
+
+    /* Content Layout */
     .container {
       display: flex;
       max-width: 1200px;
@@ -21,10 +67,10 @@
     /* Left Sidebar */
     .sidebar {
       width: 25%;
-      background: #fff;
+      background: #1e1e1e;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
     .profile-pic {
@@ -33,6 +79,7 @@
       border-radius: 50%;
       margin: 0 auto;
       display: block;
+      border: 2px solid #007bff;
     }
 
     .profile-info {
@@ -46,152 +93,71 @@
     }
 
     .profile-info p {
-      color: #666;
+      color: #aaa;
       font-size: 14px;
     }
 
-    .menu {
-      margin-top: 20px;
-    }
-
-    .menu a {
+    .menu button {
       display: block;
-      text-decoration: none;
-      color: #333;
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      text-align: center;
-    }
-
-    .menu a:hover {
+      width: 100%;
       background: #007bff;
       color: #fff;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
     }
 
-    .toast {
-      visibility: hidden;
-      min-width: 250px;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
-      border-radius: 5px;
-      padding: 10px;
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      z-index: 1;
-      font-size: 16px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-  
-    .toast.show {
-      visibility: visible;
-      animation: fadeInOut 4s ease;
-    }
-  
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0; }
-      10%, 90% { opacity: 1; }
+    .menu button:hover {
+      background: #0056b3;
     }
 
     /* Main Content */
     .main-content {
       width: 50%;
       margin: 0 20px;
-      background: #fff;
+      background: #1e1e1e;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .post {
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 20px;
-      margin-bottom: 20px;
-    }
-
-    .post:last-child {
-      border-bottom: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
     .post h3 {
-      margin: 0 0 10px;
+      color: #ffffff;
     }
 
     .post p {
-      margin: 0 0 10px;
-      color: #555;
-    }
-
-    .post img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-
-    .search-user {
-      margin: 20px;
-      text-align: center;
-    }
-  
-    .search-user input {
-      padding: 10px;
-      width: 200px;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-  
-    .search-user button {
-      padding: 10px 15px;
-      font-size: 16px;
-      color: #fff;
-      background-color: #007bff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-  
-    .search-user button:hover {
-      background-color: #0056b3;
+      color: #cccccc;
     }
 
     /* Right Sidebar */
     .right-sidebar {
       width: 25%;
-      background: #fff;
+      background: #1e1e1e;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
     .right-sidebar h3 {
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-
-    .movie {
-      margin-bottom: 20px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      color: #ffffff;
     }
 
     .movie button {
-      margin-top: 10px;
+      background: #007bff;
+      color: #ffffff;
       padding: 5px 10px;
-      background-color: #007bff;
-      color: #fff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      transition: background 0.3s;
     }
 
     .movie button:hover {
-      background-color: #0056b3;
+      background: #0056b3;
     }
   </style>
 </head>
