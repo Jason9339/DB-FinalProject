@@ -241,7 +241,7 @@ def send_friend_request():
     # 查找接收者用户
     receiver = User.query.filter_by(id=receiver_uid).first()
     if not receiver:
-        return jsonify({'error': '用户不存在'}), 400
+        return jsonify({'error': '用戶不存在'}), 400
     
     # 检查是否已经存在未处理的好友邀请
     existing_request = FriendRequest.query.filter_by(
@@ -251,7 +251,7 @@ def send_friend_request():
     ).first()
     
     if existing_request:
-        return jsonify({'error': '好友邀请已发送过'}), 400
+        return jsonify({'error': '好友邀請已發送'}), 400
     
     # 创建新的好友邀请
     new_request = FriendRequest(
@@ -262,7 +262,7 @@ def send_friend_request():
     db.session.add(new_request)
     db.session.commit()
     
-    return jsonify({'message': '好友邀请已发送'}), 200
+    return jsonify({'message': '好友邀請已發送'}), 200
 
 @main.route('/get-friend-requests', methods=['GET'])
 @login_required
@@ -297,12 +297,12 @@ def respond_friend_request():
     # 验证好友邀请是否存在
     friend_request = FriendRequest.query.get(request_id)
     if not friend_request:
-        return jsonify({'error': '好友邀请不存在'}), 404
+        return jsonify({'error': '好友邀請不存在'}), 404
 
     # 确认当前用户是接收者
     current_user_id = current_user.id
     if friend_request.receiver_id != current_user_id:
-        return jsonify({'error': '无权操作此好友邀请'}), 403
+        return jsonify({'error': '無權操作此好友邀請'}), 403
 
     # 根据 action 执行相应操作
     if action == 'accept':
@@ -318,15 +318,15 @@ def respond_friend_request():
         db.session.commit()
 
         # 使用 flash 显示提示信息
-        flash(f"你已与 {friend_request.sender.username} 成为好友！", "success")
+        flash(f"你已與 {friend_request.sender.username} 成為好友！", "success")
     elif action == 'reject':
         # 更新好友邀请状态
         friend_request.status = 'rejected'
     else:
-        return jsonify({'error': '无效的操作'}), 400
+        return jsonify({'error': '無效的操作'}), 400
 
     db.session.commit()
-    return jsonify({'message': f'好友邀请已{action}'}), 200
+    return jsonify({'message': f'好友邀請已{action}'}), 200
 
 @main.route("/profile/edit")
 @login_required

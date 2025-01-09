@@ -317,7 +317,7 @@
           })
             .then(response => {
               if (!response.ok) {
-                throw new Error('请求失败，状态码：' + response.status);
+                throw new Error('請求失敗，狀態碼：' + response.status);
               }
               return response.json();
             })
@@ -329,18 +329,18 @@
                 data.requests.forEach(request => {
                   const li = document.createElement('li');
                   li.innerHTML = `
-                    <span>${request.sender_username} 想成为你的好友</span>
+                    <span>${request.sender_username} 想成為你的好友</span>
                     <button onclick="respondFriendRequest(${request.id}, 'accept')">接受</button>
                     <button onclick="respondFriendRequest(${request.id}, 'reject')">拒绝</button>
                 ` ;
                   requestList.appendChild(li);
                 });
                 } else {
-                  requestList.innerHTML = '<li>暂无好友邀请</li>';
+                  requestList.innerHTML = '<li>暫無好友邀請</li>';
                 }
               })
               .catch(error => {
-                console.error('加载好友邀请失败:', error);
+                console.error('加載好友邀請失敗:', error);
               });
           }
       
@@ -357,7 +357,7 @@
             loadFriendRequests(); // 更新好友邀请列表
           })
           .catch(error => {
-            console.error('处理好友邀请失败:', error);
+            console.error('處理好友邀請失敗:', error);
           });
         }
       
