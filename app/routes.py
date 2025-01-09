@@ -218,8 +218,36 @@ def user_friends():
 
     # 转换为列表
     friends_list = list(friends_set)
+    
+    # 获取好友们收藏的电影
+    friends_favorites = {}
+    for friend in friends_list:
+        # 获取该好友的收藏电影
+        favorite_movies = friend.favorite_movies.all()
+        friends_favorites[friend.id] = favorite_movies
 
-    return render_template('user_friends.html', friends=friends_list)
+    return render_template('user_friends.html', friends=friends_list, favorites=friends_favorites)
+
+# 删除好友的路由
+@main.route('/remove-friend/<int:friend_id>', methods=['POST'])
+@login_required
+def remove_friend(friend_id):
+    # 查找好友对象
+    friend = User.query.get(friend_id)
+    
+    if friend:
+        # 从当前用户的好友列表中移除
+        Friend.query.filter(
+            ((Friend.user_id == current_user.id) & (Friend.friend_id == friend.id)) |
+            ((Friend.user_id == friend.id) & (Friend.friend_id == current_user.id))
+        ).delete()
+        
+        db.session.commit()
+        flash(f'你已成功删除 {friend.username} 作为好友。', 'success')
+    else:
+        flash('无法找到该好友。', 'error')
+
+    return redirect(url_for('main.user_friends'))
 
 @main.route('/my_reviews')
 @login_required
@@ -293,18 +321,6 @@ def send_friend_request():
     db.session.commit()
     
     return jsonify({'message': '好友邀请已发送'}), 200
-
-    
-    # 创建新的好友邀请
-    new_request = FriendRequest(
-        sender_id=sender_id,
-        receiver_id=receiver.id,
-        status='pending'
-    )
-    db.session.add(new_request)
-    db.session.commit()
-    
-    return jsonify({'message': '好友邀請已發送'}), 200
 
 @main.route('/get-friend-requests', methods=['GET'])
 @login_required

@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event
 from datetime import datetime
+from flask import flash
 
 user_friends = db.Table(
     "user_friends",
@@ -57,6 +58,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def remove_friend(self, friend):
+        if friend in self.friends:
+            self.friends.remove(friend)
+        else:
+            flash(f'{friend.username} 不在你的好友列表中！', 'error')
+            
     @classmethod
     def get_user_by_username(username):
         return User.query.filter_by(username=username).first()
