@@ -11,12 +11,14 @@ from flask import (
 )
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-
+from flask import request, redirect, url_for
 from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review, Hall
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
 from sqlalchemy import and_, exists
 from sqlalchemy.exc import IntegrityError
+import os 
+from werkzeug.utils import secure_filename
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
 import app
@@ -398,9 +400,15 @@ def insert_create_fixed_screening_times(movies, cinemas):
                         )
                     )
     return screenings
+from flask import Flask
+app = Flask(__name__)
 
+UPLOAD_FOLDER = 'static/images'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
+UPLOAD_FOLDER = 'static/images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @main.route('/insert', methods=['GET', 'POST'])
-def insert_movie():
+def insert_movie():  
     cinemas = Cinema.query.all()
     cinema_movies = {}
     for cinema in cinemas:
@@ -417,8 +425,21 @@ def insert_movie():
         description = request.form.get('description')
         genre = request.form.get('genre')
         release_date = request.form.get('release_date')
-        poster_url = request.form.get('poster_url', '').strip()
         selected_cinema = request.form.get('cinema')
+
+        # Handle file upload for poster image
+        file = request.files.get('poster_file')
+        poster_url = ''
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            try:
+                file.save(filepath)
+                poster_url = url_for('static', filename=f'images/{filename}', _external=True)
+                flash(f"File successfully saved to {filepath}")
+            except Exception as e:
+                flash(f"Failed to save file: {e}")
+                return "File upload failed", 500
 
         # Create new movie with is_current defaulting to False
         new_movie = Movie(
@@ -461,7 +482,6 @@ def insert_movie():
         db.session.add_all(screenings)
         db.session.commit()
 
-        # is_current will be automatically updated by the before_request handler
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('insert.html', cinemas=cinemas, cinema_movies=cinema_movies)
@@ -541,6 +561,7 @@ def add_cinema():
         # Get data from the form
         cinema_name = request.form.get('name')
         location = request.form.get('location')
+        halls_data = request.form.getlist('halls') 
 
         # Validate input
         if not cinema_name or not location:
@@ -555,6 +576,11 @@ def add_cinema():
 
         # Create a new cinema
         new_cinema = Cinema(name=cinema_name, location=location)
+
+        # Add halls to the cinema
+        for hall_data in halls_data:
+            hall_name, hall_size = hall_data.split(',')  
+            new_cinema.halls.append(Hall(name=hall_name.strip(), size=int(hall_size.strip())))
 
         # Add the new cinema to the database
         db.session.add(new_cinema)
