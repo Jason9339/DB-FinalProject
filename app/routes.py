@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from .models import User, FriendRequest, Review
 from flask import jsonify
@@ -427,3 +427,51 @@ def edit_review(review_id):
         return redirect(url_for('main.my_reviews'))
 
     return render_template('edit_review.html', review=review)
+
+@main.route('/get-booked-seats', methods=['GET'])
+@login_required
+def get_booked_seats():
+    current_user_id = current_user.id
+    
+    # 查找当前用户的所有预定
+    bookings = Booking.query.filter_by(user_id=current_user_id).all()
+
+    # 构建返回的数据
+    data = [
+        {
+            'movie_title': Movie.query.get(booking.screening.movie_id).title,  # 获取电影名称
+            'seat_number': booking.seat_number,
+            'screening_time': booking.screening.time.strftime('%Y-%m-%d %H:%M')  # 格式化时间
+        }
+        for booking in bookings
+    ]
+    
+    return jsonify({'bookings': data}), 200
+
+# 取消訂位的視圖
+@main.route('/cancel-booking/<int:booking_id>', methods=['POST'])
+@login_required
+def cancel_booking(booking_id):
+    # 查找訂位
+    booking = Booking.query.get(booking_id)
+    
+    if not booking:
+        flash('找不到此訂位!', 'danger')
+        return jsonify({'success': False, 'error': '找不到此訂位!'}), 400  # 返回錯誤信息
+
+    # 檢查訂位是否屬於當前用戶
+    if booking.user_id != current_user.id:
+        flash('無權取消此訂位!', 'danger')
+        return jsonify({'success': False, 'error': '無權取消此訂位!'}), 403  # 返回錯誤信息
+
+    # 刪除訂位
+    try:
+        db.session.delete(booking)
+        db.session.commit()
+        flash('訂位已取消!', 'success')
+        return jsonify({'success': True}), 200  # 成功取消訂位
+    except Exception as e:
+        db.session.rollback()
+        flash('取消訂位失敗!', 'danger')
+        print(e)
+        return jsonify({'success': False, 'error': '取消訂位失敗!'}), 500  # 返回錯誤信息

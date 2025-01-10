@@ -165,6 +165,41 @@
     .movie button:hover {
       background: #0056b3;
     }
+
+    .search-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;  /* 粗體 */
+      font-size: 18px;    /* 放大文字 */
+      color: #ffffff;        /* 字體顏色 */
+    }
+  
+    /* 按鈕樣式 */
+    .search-btn {
+      background-color: #007bff;  /* 藍色背景 */
+      color: white;               /* 白色文字 */
+      padding: 10px 20px;         /* 上下左右內邊距 */
+      border: none;               /* 無邊框 */
+      border-radius: 5px;         /* 圓角 */
+      cursor: pointer;            /* 滑鼠指標為點擊狀態 */
+      font-size: 16px;             /* 按鈕文字大小 */
+      transition: background-color 0.3s;  /* 背景顏色過渡效果 */
+    }
+  
+    /* 按鈕滑過樣式 */
+    .search-btn:hover {
+      background-color: #0056b3;  /* 滑過時背景變深 */
+    }
+  
+    /* 輸入框樣式 */
+    #searchUserId {
+      padding: 8px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
   </style>
   <link
       rel="stylesheet"
@@ -277,18 +312,24 @@
     <!-- Right Sidebar -->
     <div class="right-sidebar">
       <div class="friend-requests-section">
-        <h3>收到的好友邀请</h3>
+        <h3 style="font-weight: bold; font-size: 18px;">收到的好友邀请</h3>
         <ul id="friend-requests">
         <!-- 动态加载好友邀请 -->
         </ul>
       </div>
-      
+      <!-- 已预约座位 -->
+      <div class="booked-seats-section">
+        <h3 style="font-weight: bold; font-size: 18px;">已预定座位</h3>
+        <ul id="booked-seats">
+        <!-- 动态加载已预约座位 -->
+        </ul>
+      </div>
 
       <!-- 搜尋用戶 -->
       <div class="search-user">
-        <label for="searchUserId" style="display:block; margin-bottom: 8px; font-weight: bold;">發送好友邀請</label>
+        <label for="searchUserId" class="search-label">發送好友邀請</label>
         <input type="text" id="searchUserId" placeholder="輸入 User ID">
-        <button onclick="sendFriendRequest()">發送好友邀請</button>
+        <button onclick="sendFriendRequest()" class="search-btn">發送好友邀請</button>
       </div>
       
       <div id="toast" class="toast"></div>
@@ -361,8 +402,56 @@
               .catch(error => {
                 console.error('加載好友邀請失敗:', error);
               });
-          }
-      
+        }
+        // 加载已预约座位
+        function loadBookedSeats() {
+          fetch('/get-booked-seats', {
+            method: 'GET',
+            credentials: 'include'
+          })
+          .then(response => response.json())
+          .then(data => {
+            const bookedSeatsList = document.getElementById('booked-seats');
+            bookedSeatsList.innerHTML = '';
+            if (data.bookings && data.bookings.length > 0) {
+              data.bookings.forEach(booking => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                  <div><strong>電影名：</strong>${booking.movie_title}</div>
+                  <div><strong>座位：</strong>${booking.seat_number}</div>
+                  <div><strong>時間：</strong>${new Date(booking.screening_time).toLocaleDateString()} ${new Date(booking.screening_time).toLocaleTimeString()}</div>
+                  <button onclick="cancelBooking(${booking.id})">取消</button>
+                `;
+                bookedSeatsList.appendChild(li);
+              });
+            } else {
+              bookedSeatsList.innerHTML = '<li>暫無已预定座位</li>';
+            }
+          })
+          .catch(error => {
+            console.error('加載已預定座位失敗:', error);
+          });
+        }
+
+        // 取消座位預定
+        function cancelBooking(bookingId) {
+          fetch(`/cancel-booking/${bookingId}`, {
+            method: 'POST',
+            credentials: 'include' // 確保發送用戶的 session 信息
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('取消成功');
+              loadBookedSeats(); // 重新加載已預定座位
+            } else {
+              alert('取消失敗: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('取消座位預定失敗:', error);
+          });
+        }
         // 响应好友邀请
         function respondFriendRequest(requestId, action) {
           fetch('/respond-friend-request', {
@@ -381,5 +470,8 @@
         }
       
         // 页面加载时自动加载好友邀请
-        document.addEventListener('DOMContentLoaded', loadFriendRequests);
+        document.addEventListener('DOMContentLoaded', () => {
+          loadFriendRequests();
+          loadBookedSeats();
+        });
       </script>
