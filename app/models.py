@@ -137,6 +137,14 @@ user_favorites = db.Table(
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
     db.Column("movie_id", db.Integer, db.ForeignKey("movie.id"), primary_key=True),
 )
+class CinemaMovie(db.Model):
+    __tablename__ = 'cinema_movies'
+    id = db.Column(db.Integer, primary_key=True)
+    cinema_id = db.Column(db.Integer, db.ForeignKey('cinema.id'), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=False)
+
+    cinema = db.relationship('Cinema', backref='cinema_movies')
+    movie = db.relationship('Movie', backref='cinema_movies')
 
 
 @login_manager.user_loader

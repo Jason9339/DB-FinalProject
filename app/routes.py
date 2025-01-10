@@ -294,63 +294,53 @@ def insert_movie():
 
 @main.route('/delete', methods=['GET', 'POST'])
 def delete_movie():
-    # Fetch the list of cinemas and movies for the dropdown
-    cinemas = [
-        {"name": "大都會影城", "location": "台北市信義區"},
-        {"name": "新光影城", "location": "台北市西門町"},
-        {"name": "威秀影城", "location": "台北市信義區"},
-    ]
-    movies = Movie.query.all()  # Fetch all movies from the database
+    # Fetch all cinemas
+    cinemas = Cinema.query.all()
+
+    # Get selected cinema from query parameters or form data
+    selected_cinema = request.args.get('cinema') or request.form.get('cinema')
+
+    # Initialize movies list
+    movies = []
+    if selected_cinema:
+        if selected_cinema == 'all':
+            # Fetch all movies when "All" is selected
+            movies = Movie.query.all()
+        else:
+            # Fetch movies specific to the selected cinema
+            cinema = Cinema.query.filter_by(name=selected_cinema).first()
+            if cinema:
+                screenings = ScreeningTime.query.filter_by(cinema_id=cinema.id).all()
+                movies = {screening.movie for screening in screenings}
+                movies = list(movies)  # Convert to a list for rendering in the template
 
     if request.method == 'POST':
-        # Get form data
-        selected_cinema = request.form.get('cinema')
+        # Handle deletion logic
         movie_id = request.form.get('movie')
-
-        # Fetch the movie to be deleted
         movie_to_delete = Movie.query.get(movie_id)
 
         if not movie_to_delete:
             flash("Movie not found", "error")
-            return redirect(url_for('main.delete_movie'))
+            return redirect(url_for('main.delete_movie', cinema=selected_cinema))
 
-        # If "All" cinemas are selected
-        if selected_cinema == 'all':
-            # Remove the movie from all cinemas
-            for cinema_name in cinema_movies:
-                cinema_movies[cinema_name] = [
-                    movie for movie in cinema_movies[cinema_name]
-                    if movie.id != movie_to_delete.id
-                ]
-            
-            # Delete all associated screenings for the movie
-            ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).delete()
+        # Delete screenings only for the selected cinema
+        cinema = Cinema.query.filter_by(name=selected_cinema).first()
+        if not cinema:
+            flash("Cinema not found", "error")
+            return redirect(url_for('main.delete_movie', cinema=selected_cinema))
 
-            # Delete the movie from the database
+        ScreeningTime.query.filter_by(movie_id=movie_to_delete.id, cinema_id=cinema.id).delete()
+
+        # Check if the movie has screenings in other cinemas
+        remaining_screenings = ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).count()
+        if remaining_screenings == 0:
             db.session.delete(movie_to_delete)
-            db.session.commit()
+        db.session.commit()
+        flash(f"Movie '{movie_to_delete.title}' has been deleted from '{selected_cinema}'.", "success")
 
-            flash(f"Movie '{movie_to_delete.title}' has been deleted from all cinemas.", "success")
-        else:
-            # Remove the movie from the specific cinema
-            cinema_movies[selected_cinema] = [
-                movie for movie in cinema_movies[selected_cinema]
-                if movie.id != movie_to_delete.id
-            ]
+        return redirect(url_for('main.admin_dashboard'))
 
-            # Delete screenings for the movie only in the selected cinema
-            ScreeningTime.query.filter_by(
-                movie_id=movie_to_delete.id,
-                cinema_id=selected_cinema
-            ).delete()
-
-            db.session.commit()
-
-            flash(f"Movie '{movie_to_delete.title}' has been deleted from '{selected_cinema}'.", "success")
-
-        return redirect(url_for('main.delete_movie'))
-
-    return render_template('delete.html', cinemas=cinemas, movies=movies)
+    return render_template('delete.html', cinemas=cinemas, movies=movies, selected_cinema=selected_cinema)
 
 
 @main.route('/update', methods=['GET', 'POST'])

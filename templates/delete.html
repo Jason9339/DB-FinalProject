@@ -10,28 +10,37 @@
 <body>
     <div class="container">
         <h1>Delete a Movie</h1>
-        <form action="/delete" method="POST">
-            <!-- Cinema -->
-            <label for="cinema">Cinema:</label>
-            <select id="cinema" name="cinema" required>
-                <option value="all">All Cinemas</option> <!-- Option to delete from all cinemas -->
+        <form method="GET" id="cinema-form">
+            <label for="cinema">Select Cinema:</label>
+            <select name="cinema" id="cinema" onchange="this.form.submit()">
+                <option value="">Select a Cinema</option>
                 {% for cinema in cinemas %}
-                    <option value="{{ cinema.name }}">{{ cinema.name }} ({{ cinema.location }})</option>
+                <option value="{{ cinema.name }}" {% if selected_cinema == cinema.name %}selected{% endif %}>
+                    {{ cinema.name }}
+                </option>
                 {% endfor %}
             </select>
-
-            <!-- Movie -->
-            <label for="movie">Movie:</label>
-            <select id="movie" name="movie" required>
-                <option value="">Select a Movie</option>
+        </form>
+        
+        <form method="POST">
+            <label for="movie">Select Movie:</label>
+            <select name="movie" id="movie">
+                {% if movies %}
                 {% for movie in movies %}
-                    <option value="{{ movie.id }}">{{ movie.title }}</option>
+                <option value="{{ movie.id }}">{{ movie.title }}</option>
                 {% endfor %}
+                {% else %}
+                <option value="">No movies available</option>
+                {% endif %}
             </select>
-
-            <!-- Submit Button -->
+        
+            <input type="hidden" name="cinema" value="{{ selected_cinema }}">
             <button type="submit">Delete Movie</button>
         </form>
+        
+        
+        
+        
     </div>
 
     <style>
