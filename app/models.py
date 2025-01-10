@@ -42,7 +42,7 @@ class Movie(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     genre = db.Column(db.String(100))
-    screening_times = db.relationship("ScreeningTime", backref="movie", lazy=True)
+    screening_times = db.relationship("ScreeningTime", backref="movie",cascade="all, delete-orphan", lazy=True)
     release_date = db.Column(db.String(50), nullable=True)
     poster_url = db.Column(db.String(300), nullable=True)
     reviews = db.relationship("Review", backref="movie", lazy=True)
@@ -56,7 +56,7 @@ class Cinema(db.Model):
     name = db.Column(db.String(200), nullable=False)
     location = db.Column(db.String(300))
     halls = db.relationship("Hall", backref="cinema", lazy=True)
-    screening_times = db.relationship("ScreeningTime", backref="cinema", lazy=True)
+    screening_times = db.relationship("ScreeningTime", backref="cinema",cascade="all, delete-orphan", lazy=True)
 
 
 class Hall(db.Model):

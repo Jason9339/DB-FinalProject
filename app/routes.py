@@ -589,3 +589,59 @@ def delete_cinema():
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('delete_cinema.html', cinemas=cinemas)
+
+from sqlalchemy.exc import IntegrityError
+
+@main.route('/add_screeningtime', methods=['GET', 'POST'])
+def add_screeningtime():
+    # Fetch required data for dropdowns
+    cinemas = Cinema.query.all()
+    movies = Movie.query.filter_by(is_current=True).all()
+    halls = Hall.query.all()
+
+    if request.method == 'POST':
+        # Retrieve form data
+        movie_id = request.form.get('movie')
+        cinema_id = request.form.get('cinema')
+        hall_id = request.form.get('hall')
+        date = request.form.get('date')
+        price = request.form.get('price')
+
+        # Convert date to a proper DateTime object
+        try:
+            screening_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            flash("Invalid date format. Please use 'YYYY-MM-DD HH:MM:SS'.", "danger")
+            return redirect(url_for('main.add_screeningtime'))
+
+        # Check if the screening time already exists
+        existing_screening = ScreeningTime.query.filter_by(
+            movie_id=movie_id,
+            cinema_id=cinema_id,
+            hall_id=hall_id,
+            date=screening_date
+        ).first()
+
+        if existing_screening:
+            flash("This screening time already exists.", "danger")
+        else:
+            # Create and add the new screening time
+            new_screening = ScreeningTime(
+                movie_id=movie_id,
+                cinema_id=cinema_id,
+                hall_id=hall_id,
+                date=screening_date,
+                price=price
+            )
+
+            try:
+                db.session.add(new_screening)
+                db.session.commit()
+                flash("Screening time added successfully.", "success")
+            except IntegrityError:
+                db.session.rollback()
+                flash("Failed to add screening time. Please try again.", "danger")
+
+        return redirect(url_for('main.add_dashboard'))
+
+    return render_template('add_screeningtime.html', cinemas=cinemas, movies=movies, halls=halls)
