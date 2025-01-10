@@ -6,6 +6,7 @@ from app.forms import RegistrationForm, LoginForm, BookingForm
 from .models import User, FriendRequest
 from flask import jsonify
 from flask import session
+from werkzeug.security import generate_password_hash
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
@@ -187,7 +188,7 @@ def update_profile():
 @login_required
 def profile(username):
     if username:  # 如果 URL 中有 username，顯示該用戶的資料
-        user = get_user_by_username(username)  # 查找該用戶信息
+        user = User.query.filter_by(username=username).first()  # 查找該用戶信息
         if not user:
             # 如果找不到該用戶，返回 404 錯誤
             return render_template('404.html'), 404
@@ -386,7 +387,18 @@ def respond_friend_request():
     db.session.commit()
     return jsonify({'message': f'好友邀請已{action}'}), 200
 
-@main.route("/profile/edit")
+@main.route('/profile_edit', methods=['GET', 'POST'])
 @login_required
 def profile_edit():
-    return render_template("profile_edit.html")  # Create the profile_edit.html page
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        if new_password:
+            current_user.set_password(new_password)
+            db.session.commit()
+            flash('密碼已更新！', 'success')
+            return redirect(url_for('main.profile'))  # 更新後跳轉到個人資料頁面
+        else:
+            flash('請輸入新密碼！', 'error')
+
+    # 如果是 GET 請求，顯示編輯頁面
+    return render_template('profile_edit.html')

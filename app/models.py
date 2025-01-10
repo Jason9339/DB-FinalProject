@@ -45,19 +45,14 @@ class User(UserMixin, db.Model):
         if friend not in self.friends:
             self.friends.append(friend)
 
-    def remove_friend(self, friend):
-        if friend in self.friends:
-            self.friends.remove(friend)
-
     def is_friend(self, friend):
         return friend in self.friends
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
     def remove_friend(self, friend):
         if friend in self.friends:
             self.friends.remove(friend)
@@ -65,9 +60,17 @@ class User(UserMixin, db.Model):
             flash(f'{friend.username} 不在你的好友列表中！', 'error')
             
     @classmethod
-    def get_user_by_username(username):
+    def get_user_by_username(cls, username):
         return User.query.filter_by(username=username).first()
     
+    def change_password(self, old_password, new_password):
+        if self.check_password(old_password):
+            self.set_password(new_password)
+            db.session.commit()
+            return True
+        else:
+            return False
+
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
