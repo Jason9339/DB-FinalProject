@@ -1,0 +1,70 @@
+{% extends "base.html" %} {% block title %}Cinemas - MovieBooker{% endblock %}
+{% block extra_head %}
+<style>
+  .cinema-list {
+    padding: 20px;
+  }
+  .cinema-item {
+    background: #1d1d1d;
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  .cinema-name {
+    color: #f2a223;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+  .cinema-location {
+    color: #fff;
+    margin-bottom: 15px;
+  }
+  .cinema-halls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hall-info {
+    background: #2f2f2f;
+    padding: 8px 15px;
+    border-radius: 3px;
+    color: #d5d5d5;
+  }
+  .view-screenings {
+    display: inline-block;
+    background: #f2a223;
+    color: #000;
+    padding: 5px 15px;
+    border-radius: 3px;
+    text-decoration: none;
+    margin-top: 10px;
+  }
+  .view-screenings:hover {
+    background: #d88d1f;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="cinema-list">
+  <h2 style="color: #f2a223; margin-bottom: 20px">Our Cinemas</h2>
+
+  {% for cinema in cinemas %}
+  <div class="cinema-item">
+    <div class="cinema-name">{{ cinema.name }}</div>
+    <div class="cinema-location">
+      <strong>Location:</strong> {{ cinema.location }}
+    </div>
+    <div class="cinema-halls">
+      {% for hall in cinema.halls %}
+      <div class="hall-info">Hall {{ hall.name }} ({{ hall.size }} seats)</div>
+      {% endfor %}
+    </div>
+    <a
+      href="{{ url_for('main.cinema_screenings', cinema_id=cinema.id) }}"
+      class="view-screenings"
+    >
+      View Screenings
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

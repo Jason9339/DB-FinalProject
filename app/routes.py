@@ -1,28 +1,39 @@
 # app/routes.py
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    session,
+    jsonify,
+)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review
+
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review, Hall
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
+import app
 
 
 @main.route("/")
 def home():
-    movies = Movie.query.filter_by(is_current=True).limit(6).all()
-    # top_rated_movies = Movie.query.order_by(Movie.rating.desc()).limit(6).all()
-    # most_commented_movies = (
-    #     Movie.query.order_by(Movie.comments_count.desc()).limit(6).all()
-    # )
+    movies = Movie.query.filter_by(is_current=True).limit(10).all()
+    top_rated_movies = Movie.query.order_by(Movie.rating.desc()).limit(5).all()
+    most_commented_movies = (
+        Movie.query.order_by(Movie.comments_count.desc()).limit(5).all()
+    )
 
     return render_template(
         "home.html",
         movies=movies,
-        top_rated_movies=[],
-        most_commented_movies=[],
+        top_rated_movies=top_rated_movies,
+        most_commented_movies=most_commented_movies,
     )
 
 
@@ -64,31 +75,119 @@ def toggle_favorite(movie_id):
 @main.route("/book/<int:screening_id>", methods=["GET", "POST"])
 @login_required
 def book_seat(screening_id):
+
     screening = ScreeningTime.query.get_or_404(screening_id)
     form = BookingForm()
 
-    if form.validate_on_submit():
-        # Check if seat is already booked
-        existing_booking = Booking.query.filter_by(
-            screening_id=screening_id, seat_number=form.seat_number.data
-        ).first()
+    bookings = Booking.query.filter_by(screening_id=screening_id).all()
+    screening.cinema_id
+    total_seats = (
+        Hall.query.with_entities(Hall.size).filter_by(id=screening.hall.id).one()[0]
+    )
+    # 定義座位表（假設一個固定座位結構）
+    seats_per_row = 10
+    total_rows = total_seats // seats_per_row
 
-        if existing_booking:
-            flash("This seat is already booked", "danger")
-            return render_template("booking.html", form=form, screening=screening)
+    seating_chart = [  # 初始化座位表
+        [
+            {"seat_number": row * seats_per_row + seat + 1, "status": "available"}
+            for seat in range(seats_per_row)
+        ]
+        for row in range(total_rows)
+    ]
+    # app.logging.debug(seating_chart)
+    # 標記已預約的座位
+    for booking in bookings:
+        seat_number = int(booking.seat_number)
+        row = (seat_number - 1) // seats_per_row
+        seat = (seat_number - 1) % seats_per_row
 
-        # Create new booking
-        booking = Booking(
-            user_id=current_user.id,
-            screening_id=screening_id,
-            seat_number=form.seat_number.data,
-        )
-        db.session.add(booking)
-        db.session.commit()
-        flash("Booking successful!", "success")
-        return redirect(url_for("main.home"))
+        # 標記該座位為已預約
+        if 0 <= row < total_rows and 0 <= seat < seats_per_row:
+            seating_chart[row][seat]["status"] = "booked"
+        else:
+            print(f"Invalid seat number: {seat_number}")
 
-    return render_template("booking.html", form=form, screening=screening)
+    # 根據 screening_id 過濾相關資料並生成選項
+    form.cinema.choices = [(screening.cinema.id, screening.cinema.name)]
+
+    form.hall.choices = [(screening.hall.id, screening.hall.name)]
+
+    form.movie.choices = [(screening.movie.id, screening.movie.title)]
+
+    form.screening_time.choices = [(screening.id, screening.date)]
+    bill_detail = {
+        "name": User.query.filter_by(id=current_user.id).first().username,
+        "cinema": screening.cinema.name,
+        "hall": screening.hall.name,
+        "movie": screening.movie.title,
+        "id": [],
+        "price": [],
+    }
+    if request.method == "POST":
+        app.logging.debug(
+            f"Form data: {request.form}"
+        )  ## 還要設定 cinima 和 movie screening_time
+        if form.validate_on_submit():
+            # app.logging.debug(form.seat_number.data.split(','))
+            for seat in form.seat_number.data.split(","):
+                # Check if seat is already booked
+                existing_booking = Booking.query.filter_by(
+                    screening_id=screening_id, seat_number=seat
+                ).first()
+
+                if existing_booking:
+                    flash("This seat is already booked", "danger")
+                    return render_template(
+                        "booking.html", form=form, screening=screening
+                    )
+
+                # Create new booking
+                booking = Booking(
+                    user_id=current_user.id,
+                    screening_id=screening_id,
+                    seat_number=seat,
+                )
+                db.session.add(booking)
+                db.session.commit()
+                flash("Booking successful!", "success")
+                bill_detail["id"].append(booking.id)
+                bill_detail["price"].append(
+                    ScreeningTime.query.with_entities(ScreeningTime.price)
+                    .filter_by(id=screening_id)
+                    .one()[0]
+                )
+
+            # app.logging.debug(bill_detail)
+            session["bill_detail"] = bill_detail
+            return redirect(url_for("main.payment"))
+        else:
+            app.logging.debug(f"Form errors: {form.errors}")
+
+    return render_template(
+        "booking.html", form=form, screening=screening, seating_chart=seating_chart
+    )
+
+
+@main.route("/book/bill/", methods=["GET", "POST"])
+@login_required
+def payment():
+    bill_detail = session.get("bill_detail", [])
+    app.logging.debug(bill_detail)
+    name = bill_detail["name"]
+    ids = bill_detail["id"]
+    price = bill_detail["price"]
+    price_sum = sum(price)
+    return render_template(
+        "bill.html",
+        name=name,
+        book_id=ids,
+        price=price,
+        price_sum=price_sum,
+        cinema=bill_detail["cinema"],
+        hall=bill_detail["hall"],
+        movie=bill_detail["movie"],
+    )
 
 
 @auth.route("/register", methods=["GET", "POST"])
@@ -135,6 +234,7 @@ def search():
     return render_template("search_results.html", movies=movies, query=query)
 
 
+
 @main.route('/submit_review/<int:movie_id>', methods=['POST'])
 @login_required
 def submit_review(movie_id):
@@ -164,3 +264,54 @@ def submit_review(movie_id):
 
     flash("Your review has been submitted successfully!", "success")
     return redirect(url_for('main.movie_detail', movie_id=movie_id))
+
+@main.route("/movies/showing")
+def movies_showing():
+    page = request.args.get("page", 1, type=int)
+    per_page = 12
+    movies_query = Movie.query.filter(Movie.is_current == True).order_by(
+        Movie.release_date.desc()
+    )
+    movies = movies_query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template("movies_showing.html", movies=movies)
+
+
+@main.route("/movies/top-rated")
+def top_rated_movies():
+    page = request.args.get("page", 1, type=int)
+    per_page = 12
+    movies_query = Movie.query.order_by(Movie.rating.desc())
+    movies = movies_query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template("top_rated_movies.html", movies=movies)
+
+
+@main.route("/movies/most-commented")
+def most_commented_movies():
+    page = request.args.get("page", 1, type=int)
+    per_page = 12
+    movies_query = Movie.query.order_by(Movie.comments_count.desc())
+    movies = movies_query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template("most_commented_movies.html", movies=movies)
+
+
+@main.route("/cinemas")
+def cinemas():
+    cinemas = Cinema.query.all()
+    return render_template("cinemas.html", cinemas=cinemas)
+
+
+@main.route("/cinema/<int:cinema_id>/screenings")
+def cinema_screenings(cinema_id):
+    cinema = Cinema.query.get_or_404(cinema_id)
+    screenings = ScreeningTime.query.filter_by(cinema_id=cinema_id).all()
+    return render_template(
+        "cinema_screenings.html", cinema=cinema, screenings=screenings
+    )
+
+
+@main.route("/my-list")
+@login_required
+def my_list():
+    favorite_movies = current_user.favorite_movies
+    return render_template("my_list.html", favorite_movies=favorite_movies)
+

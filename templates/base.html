@@ -29,9 +29,10 @@
             <li>
               <a class="active" href="{{ url_for('main.home') }}">HOME</a>
             </li>
+            <li><a href="{{ url_for('main.cinemas') }}">Cinemas</a></li>
             <li><a href="#">Booking</a></li>
-            <li><a href="#">Your List</a></li>
             {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
             <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% else %}
             <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>

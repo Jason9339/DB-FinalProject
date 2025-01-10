@@ -2,6 +2,7 @@
 from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import event
 
 
 user_friends = db.Table(
@@ -45,8 +46,9 @@ class Movie(db.Model):
     release_date = db.Column(db.String(50), nullable=True)
     poster_url = db.Column(db.String(300), nullable=True)
     reviews = db.relationship("Review", backref="movie", lazy=True)
-    is_current = True
-    rating = 5.0
+    is_current = db.Column(db.Boolean, default=True, nullable=False)
+    rating = db.Column(db.Float, default=0.0, nullable=False)
+    comments_count = db.Column(db.Integer, default=0, nullable=False)   
 
 
 class Cinema(db.Model):
@@ -91,6 +93,34 @@ class Review(db.Model):
     movie_id = db.Column(db.Integer, db.ForeignKey("movie.id"), nullable=False)
     content = db.Column(db.Text, nullable=False)
     rate = db.Column(db.Float, nullable=False)
+
+    @staticmethod
+    def after_insert(mapper, connection, target):
+        # 更新評論數和平均評分
+        Movie.query.filter_by(id=target.movie_id).update(
+            {
+                "comments_count": Movie.comments_count + 1,
+                "rating": db.session.query(db.func.avg(Review.rate))
+                .filter(Review.movie_id == target.movie_id)
+                .scalar() or 0.0
+            }
+        )
+
+    @staticmethod
+    def after_delete(mapper, connection, target):
+        # 更新評論數和平均評分
+        Movie.query.filter_by(id=target.movie_id).update(
+            {
+                "comments_count": Movie.comments_count - 1,
+                "rating": db.session.query(db.func.avg(Review.rate))
+                .filter(Review.movie_id == target.movie_id)
+                .scalar() or 0.0
+            }
+        )
+
+# 在Review類定義後添加事件監聽器
+event.listen(Review, 'after_insert', Review.after_insert)
+event.listen(Review, 'after_delete', Review.after_delete)
 
 
 class Seat(db.Model):

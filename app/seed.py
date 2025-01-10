@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from app import db
 from app.models import User, Movie, Cinema, Hall, ScreeningTime, Review
-
+import random
 
 def seed_movies():
     movies = [
@@ -146,15 +146,19 @@ def seed_users():
 
 
 def seed_reviews(users, movies):
-    reviews = [
-        Review(
-            user_id=users[i % 3].id,
-            movie_id=movies[i % 20].id,
-            content=f"這是用戶 {i % 3 + 1} 對電影 {i % 20 + 1} 的影評。",
-            rate=4.0 + (i % 2),
-        )
-        for i in range(5)
-    ]
+    reviews = []
+    # 為每部電影創建多個評論，確保有足夠的數據來計算平均分
+    for movie in movies:
+        # 每部電影隨機生成2-5條評論
+        num_reviews = random.randint(2, 5)
+        for _ in range(num_reviews):
+            review = Review(
+                user_id=random.choice(users).id,
+                movie_id=movie.id,
+                content=f"這是一條關於《{movie.title}》的影評。",
+                rate=random.uniform(3.0, 5.0)  # 生成3.0到5.0之間的隨機評分
+            )
+            reviews.append(review)
     return reviews
 
 
@@ -163,19 +167,25 @@ def init_db():
     if Movie.query.first() is not None:
         return
 
+    # 先添加基礎數據
     movies = seed_movies()
     cinemas = seed_cinemas()
     users = seed_users()
+    admin = create_admin()
 
     db.session.add_all(movies)
     db.session.add_all(cinemas)
     db.session.add_all(users)
+    db.session.add(admin)
     db.session.commit()
 
+    # 添加放映場次
     screenings = create_fixed_screening_times(movies, cinemas)
-    reviews = seed_reviews(users, movies)
-
     db.session.add_all(screenings)
+    db.session.commit()
+
+    # 最後添加評論，這樣可以觸發評論的事件監聽器
+    reviews = seed_reviews(users, movies)
     db.session.add_all(reviews)
     db.session.commit()
 
