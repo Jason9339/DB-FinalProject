@@ -198,6 +198,13 @@
   margin-bottom: 0.5rem;
   color: #bdc3c7;
 }
+
+.no-screenings-message {
+  color: #ecf0f1;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
 </style>
 {% endblock %}
 
@@ -261,32 +268,36 @@
 
     <div class="detail-screenings">
       <h2>Screening Times</h2>
-      <table class="detail-screenings-table">
-        <thead>
-          <tr>
-            <th>Date & Time</th>
-            <th>Cinema</th>
-            <th>Hall</th>
-            <th>Price</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for screening in screenings %}
-          <tr>
-            <td>{{ screening.date.strftime("%Y-%m-%d %H:%M") }}</td>
-            <td>{{ screening.cinema.name }}</td>
-            <td>{{ screening.hall.name }}</td>
-            <td>${{ screening.price }}</td>
-            <td>
-              <a href="{{ url_for('main.book_seat', screening_id=screening.id) }}" class="detail-book-btn">
-                Book Now
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      {% if screenings %}
+        <table class="detail-screenings-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Cinema</th>
+              <th>Hall</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for screening in screenings %}
+            <tr>
+              <td>{{ screening.date.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ screening.cinema.name }}</td>
+              <td>{{ screening.hall.name }}</td>
+              <td>${{ screening.price }}</td>
+              <td>
+                <a href="{{ url_for('main.book_seat', screening_id=screening.id) }}" class="detail-book-btn">
+                  Book Now
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="no-screenings-message">目前沒有場次</p>
+      {% endif %}
     </div>
 
     <div class="detail-review-section">

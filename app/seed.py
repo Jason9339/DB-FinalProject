@@ -105,23 +105,41 @@ def seed_cinemas():
 
 
 def create_fixed_screening_times(movies, cinemas):
-    """為每部電影創建固定場次"""
+    """為每部電影創建前一周、當前周、後一周的隨機放映時間"""
     screenings = []
-    fixed_times = [
+    # 設置可能的放映時間範圍
+    possible_times = [
         datetime.now().replace(hour=10, minute=0),
         datetime.now().replace(hour=14, minute=0),
         datetime.now().replace(hour=18, minute=0),
     ]
+    
+    # 隨機選擇5個不同的放映時段
     for i, movie in enumerate(movies):
-        for cinema in cinemas:
-            for hall in cinema.halls:
-                for time in fixed_times:
+        # 每部電影選擇5個放映時間
+        selected_times = []
+        
+        # 保證有2部電影放映時間全部過期
+        if i < 2:
+            # 設置過期的放映時間（如過去一週）
+            for j in range(5):
+                selected_times.append(datetime.now() - timedelta(days=random.randint(8, 14)) + timedelta(hours=random.choice([10, 14, 18])))
+        else:
+            # 為其他電影設置當前時間及前後一週的時間
+            for j in range(5):
+                time_shift = random.choice([-7, 0, 7])  # 隨機選擇 -7, 0, 或 7 來代表前一周、當前周、後一周
+                selected_times.append(random.choice(possible_times) + timedelta(days=time_shift))
+        
+        # 為每個選擇的時間生成放映場次
+        for time in selected_times:
+            for cinema in cinemas:
+                for hall in cinema.halls:
                     screenings.append(
                         ScreeningTime(
                             movie_id=movie.id,
                             cinema_id=cinema.id,
                             hall_id=hall.id,
-                            date=time + timedelta(days=i % 7),
+                            date=time,
                             price=300 + (i % 5) * 10,
                         )
                     )

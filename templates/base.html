@@ -27,15 +27,31 @@
         <div id="navigation">
           <ul>
             <li>
-              <a class="active" href="{{ url_for('main.home') }}">HOME</a>
+              <a href="{{ url_for('main.home') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.home' }}">HOME</a>
             </li>
-            <li><a href="{{ url_for('main.cinemas') }}">Cinemas</a></li>
-            <li><a href="#">Booking</a></li>
+            <li>
+              <a href="{{ url_for('main.cinemas') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.cinemas' }}">Cinemas</a>
+            </li>
+            <li>
+              <a href="#" 
+                 class="{{ 'active' if request.endpoint == 'main.booking' }}">Booking</a>
+            </li>
             {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
-            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            <li>
+              <a href="{{ url_for('main.my_list') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.my_list' }}">My List</a>
+            </li>
+            <li>
+              <a href="{{ url_for('auth.logout') }}" 
+                 class="{{ 'active' if request.endpoint == 'auth.logout' }}">Logout</a>
+            </li>
             {% else %}
-            <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>
+            <li>
+              <a href="{{ url_for('auth.login') }}" 
+                 class="{{ 'active' if request.endpoint == 'auth.login' }}">SignIn</a>
+            </li>
             {% endif %}
           </ul>
         </div>
