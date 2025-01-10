@@ -147,6 +147,9 @@ def seed_users():
 
 def seed_reviews(users, movies):
     reviews = []
+    # 可選的評分範圍，間隔為 0.5
+    possible_ratings = [3.0, 3.5, 4.0, 4.5, 5.0]
+
     # 為每部電影創建多個評論，確保有足夠的數據來計算平均分
     for movie in movies:
         # 每部電影隨機生成2-5條評論
@@ -156,11 +159,10 @@ def seed_reviews(users, movies):
                 user_id=random.choice(users).id,
                 movie_id=movie.id,
                 content=f"這是一條關於《{movie.title}》的影評。",
-                rate=random.uniform(3.0, 5.0)  # 生成3.0到5.0之間的隨機評分
+                rate=random.choice(possible_ratings)  # 隨機選擇一個固定評分
             )
             reviews.append(review)
     return reviews
-
 
 def init_db():
     """初始化數據庫"""
