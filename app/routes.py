@@ -16,7 +16,7 @@ from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review, Hall
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
 from sqlalchemy import and_, exists
-
+from sqlalchemy.exc import IntegrityError
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
 import app
@@ -417,7 +417,7 @@ def insert_movie():
         description = request.form.get('description')
         genre = request.form.get('genre')
         release_date = request.form.get('release_date')
-        poster_url = f"/static/images/{request.form.get('poster_url', '').strip()}"
+        poster_url = request.form.get('poster_url', '').strip()
         selected_cinema = request.form.get('cinema')
 
         # Create new movie with is_current defaulting to False
@@ -534,3 +534,124 @@ def delete_movie():
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('delete.html', cinemas=cinemas, movies=movies, selected_cinema=selected_cinema)
+
+@main.route('/add_cinema', methods=['GET', 'POST'])
+def add_cinema():
+    if request.method == 'POST':
+        # Get data from the form
+        cinema_name = request.form.get('name')
+        location = request.form.get('location')
+
+        # Validate input
+        if not cinema_name or not location:
+            flash("Cinema name and location are required.", "danger")
+            return redirect(url_for('main.add_cinema'))
+
+        # Check if the cinema already exists
+        existing_cinema = Cinema.query.filter_by(name=cinema_name).first()
+        if existing_cinema:
+            flash("A cinema with this name already exists.", "danger")
+            return redirect(url_for('main.add_cinema'))
+
+        # Create a new cinema
+        new_cinema = Cinema(name=cinema_name, location=location)
+
+        # Add the new cinema to the database
+        db.session.add(new_cinema)
+        db.session.commit()
+
+        flash(f"Cinema '{cinema_name}' has been added successfully.", "success")
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('add_cinema.html')
+
+@main.route('/delete_cinema', methods=['GET', 'POST'])
+def delete_cinema():
+    # Fetch all cinemas for the dropdown
+    cinemas = Cinema.query.all()
+
+    if request.method == 'POST':
+        # Get selected cinema ID from the form
+        cinema_id = request.form.get('cinema')
+        cinema_to_delete = Cinema.query.get_or_404(cinema_id)
+
+        # Check if the cinema is playing any movies
+        screenings = ScreeningTime.query.filter_by(cinema_id=cinema_to_delete.id).count()
+        if screenings > 0:
+            flash(f"Cannot delete cinema '{cinema_to_delete.name}' because it is playing movies.", "danger")
+            return redirect(url_for('main.delete_cinema'))
+
+        # Delete the cinema
+        db.session.delete(cinema_to_delete)
+        db.session.commit()
+
+        flash(f"Cinema '{cinema_to_delete.name}' has been deleted successfully.", "success")
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('delete_cinema.html', cinemas=cinemas)
+
+@main.route('/add_screeningtime', methods=['GET', 'POST'])
+def add_screeningtime():
+    # Fetch all cinemas for the dropdown
+    cinemas = Cinema.query.all()
+
+    # Get selected cinema from the query parameters
+    selected_cinema_name = request.args.get('cinema')
+    selected_cinema = None
+    movies = []
+
+    # If a cinema is selected, fetch its movies
+    if selected_cinema_name:
+        selected_cinema = Cinema.query.filter_by(name=selected_cinema_name).first()
+        if selected_cinema:
+            # Fetch movies currently being screened in the selected cinema
+            screenings = ScreeningTime.query.filter_by(cinema_id=selected_cinema.id).all()
+            movies = {screening.movie for screening in screenings}  # Unique movies
+            movies = list(movies)  # Convert to a list for rendering
+
+    if request.method == 'POST':
+        # Handle form submission
+        movie_id = request.form.get('movie')
+        cinema_id = request.form.get('cinema_id')
+        hall_id = request.form.get('hall')
+        date = request.form.get('date')
+        price = request.form.get('price')
+
+        # Validate and process the date
+        try:
+            screening_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            flash("Invalid date format. Use 'YYYY-MM-DD HH:MM:SS'.", "danger")
+            return redirect(url_for('main.add_screeningtime', cinema=cinema_id))
+
+        # Check if the screening already exists
+        existing_screening = ScreeningTime.query.filter_by(
+            movie_id=movie_id,
+            cinema_id=cinema_id,
+            hall_id=hall_id,
+            date=screening_date
+        ).first()
+
+        if existing_screening:
+            flash("This screening time already exists.", "danger")
+        else:
+            # Create and add the new screening
+            new_screening = ScreeningTime(
+                movie_id=movie_id,
+                cinema_id=cinema_id,
+                hall_id=hall_id,
+                date=screening_date,
+                price=price
+            )
+            db.session.add(new_screening)
+            db.session.commit()
+            flash("Screening time added successfully.", "success")
+
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template(
+        'add_screeningtime.html',
+        cinemas=cinemas,
+        movies=movies,
+        selected_cinema=selected_cinema
+    )

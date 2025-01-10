@@ -7,13 +7,16 @@
     <h2>Admin Actions</h2>
   </div>
   <div class="admin-actions">
-    <button onclick="location.href='/insert'">Add movie</button>
-    <button onclick="location.href='/delete'">Delete movie</button>
-    <button onclick="location.href='/update'">Update movie</button>
-</div>
-
+    <button onclick="window.location.href='/insert'">Add Movie</button>
+    <button onclick="window.location.href='/add_cinema'">Add Cinema</button>
+    <button onclick="window.location.href='/add_screeningtime'">Add Screeningtime</button>
+    <button onclick="window.location.href='/delete'">Delete Movie</button>
+    <button onclick="window.location.href='/delete_cinema'">Delete Cinema</button>
+    <button onclick="window.location.href='/update'">Update Movie</button>
+  </div>
   <div class="cl">&nbsp;</div>
 </div>
+
 
 
 {% for cinema_name, movies in cinema_movies.items() %}

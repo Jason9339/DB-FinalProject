@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="add-screeningtime-page">
+    <div class="box">
+        <div class="head">
+            <h2>Add Screening Time</h2>
+        </div>
+        <div class="cl">&nbsp;</div>
+    </div>
+
+    <div class="container">
+        <h1>Add a Screening Time</h1>
+
+        <!-- Cinema Selection Form -->
+        <form method="GET" id="cinema-form">
+            <label for="cinema">Select Cinema:</label>
+            <select name="cinema" id="cinema" onchange="this.form.submit()">
+                <option value="">Choose a Cinema</option>
+                {% for cinema in cinemas %}
+                <option value="{{ cinema.name }}" {% if selected_cinema and selected_cinema.name == cinema.name %}selected{% endif %}>
+                    {{ cinema.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Screening Time Form -->
+        <form method="POST">
+            {% if selected_cinema %}
+            <input type="hidden" name="cinema_id" value="{{ selected_cinema.id }}">
+
+            <label for="movie">Select Movie:</label>
+            <select name="movie" id="movie" required>
+                {% if movies %}
+                {% for movie in movies %}
+                <option value="{{ movie.id }}">{{ movie.title }}</option>
+                {% endfor %}
+                {% else %}
+                <option value="">No movies available</option>
+                {% endif %}
+            </select>
+
+            <label for="hall">Select Hall:</label>
+            <select name="hall" id="hall" required>
+                <option value="">Choose a Hall</option>
+                {% for hall in selected_cinema.halls %}
+                <option value="{{ hall.id }}">{{ hall.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="date">Date and Time:</label>
+            <input type="text" id="date" name="date" placeholder="YYYY-MM-DD HH:MM:SS" required>
+
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" step="0.01" placeholder="Enter the price" required>
+
+            <button type="submit">Add Screening Time</button>
+            {% else %}
+            <p>Please select a cinema to see available movies and halls.</p>
+            {% endif %}
+        </form>
+    </div>
+
+    <style>
+        .admin-icon {
+            text-align: right;
+             margin: 10px 20px;
+        }
+        .admin-icon img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .add-screeningtime-page .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-screeningtime-page h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .add-screeningtime-page label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .add-screeningtime-page input,
+        .add-screeningtime-page select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .add-screeningtime-page button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .add-screeningtime-page button:hover {
+            background-color: #218838;
+        }
+    </style>
+</div>
+
+{% endblock %}
