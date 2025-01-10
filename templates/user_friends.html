@@ -58,7 +58,6 @@
             color: #fff;
             margin-top: 10px;
         }
-        /* Responsive design for mobile */
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.5em;
@@ -76,13 +75,30 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        
         .btn-danger:hover {
             background-color: #c0392b;
+        }
+        a.back-to-profile {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        a.back-to-profile:hover {
+            background-color: #666;
         }
     </style>
 </head>
 <body>
+    <!-- Back to profile link -->
+    <a href="{{ url_for('main.profile') }}" class="back-to-profile">返回个人资料</a>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <ul>

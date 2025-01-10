@@ -133,6 +133,12 @@
       color: #cccccc;
     }
 
+    .post img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+    
     /* Right Sidebar */
     .right-sidebar {
       width: 25%;
@@ -160,8 +166,64 @@
       background: #0056b3;
     }
   </style>
+  <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+      type="text/css"
+      media="all"
+    />
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"
+    ></script>
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='js/jquery-func.js') }}"
+    ></script>
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
+  <div id="shell">
+    <!-- Header -->
+    <div id="header">
+      <h1 id="logo"><a href="{{ url_for('main.home') }}">MovieBooker</a></h1>
+      <div id="navigation">
+        <ul>
+          <li>
+            <a class="active" href="{{ url_for('main.home') }}">HOME</a>
+          </li>
+          <li><a href="{{ url_for('main.cinemas') }}">Cinemas</a></li>
+          <li><a href="#">Booking</a></li>
+          {% if current_user.is_authenticated %}
+          <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
+          <li><a href="{{ url_for('main.profile') }}">Profile</a></li>
+          <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div id="sub-navigation">
+        <div id="search">
+          <form
+            action="{{ url_for('main.search') }}"
+            method="get"
+            accept-charset="utf-8"
+          >
+            <label for="search-field">SEARCH</label>
+            <input
+              type="text"
+              name="query"
+              value="Enter search here"
+              id="search-field"
+              class="blink search-field"
+            />
+            <input type="submit" value="GO!" class="search-button" />
+          </form>
+        </div>
+      </div>
+    </div>
+
   <div class="container">
     <!-- Left Sidebar -->
     <div class="sidebar">

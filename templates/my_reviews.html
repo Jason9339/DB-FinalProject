@@ -48,13 +48,26 @@
         strong {
             color: #fff; /* White color for rating text */
         }
-        /* No reviews message styling */
         p.no-reviews {
             text-align: center;
             font-size: 1.5em;
             color: #999;
         }
-        /* Responsive design for mobile */
+        a.back-to-profile {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        a.back-to-profile:hover {
+            background-color: #666;
+        }
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.5em;
@@ -63,10 +76,17 @@
                 font-size: 1.1em;
                 padding: 15px;
             }
+            a.back-to-profile {
+                font-size: 0.9em;
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Back to profile link -->
+    <a href="{{ url_for('main.profile') }}" class="back-to-profile">Back to Profile</a>
+
     <h1>My Reviews</h1>
 
     <!-- Display flash messages -->
