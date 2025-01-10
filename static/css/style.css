@@ -458,3 +458,13 @@ h1#logo a {
 .section-title {
   padding-left: 10px; /* 增加內距以與直線分開 */
 }
+
+.admin-icon {
+  text-align: right;
+   margin: 10px 20px;
+}
+.admin-icon img {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
