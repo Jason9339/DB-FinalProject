@@ -1,8 +1,25 @@
-{% extends "base.html" %} {% block content %} {% for cinema, movies in
-cinema_movies.items() %}
+{% extends "base.html" %} {% block content %} 
+
+
+<!-- Admin Actions Box -->
 <div class="box">
   <div class="head">
-    <h2>{{ cinema.name }}</h2>
+    <h2>Admin Actions</h2>
+  </div>
+  <div class="admin-actions">
+    <button onclick="location.href='/insert'">Add movie</button>
+    <button onclick="location.href='/delete'">Delete movie</button>
+    <button onclick="location.href='/update'">Update movie</button>
+</div>
+
+  <div class="cl">&nbsp;</div>
+</div>
+
+
+{% for cinema_name, movies in cinema_movies.items() %}
+<div class="box">
+  <div class="head">
+    <h2>{{ cinema_name }}</h2>
     <p class="text-right"><a href="#">See all</a></p>
   </div>
   {% if movies %} {% for movie in movies[:10] %}
@@ -37,5 +54,22 @@ cinema_movies.items() %}
     height: 30px;
     cursor: pointer;
   }
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .admin-actions button {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .admin-actions button:hover {
+    background-color: #0056b3;
+  }
 </style>
+
 {% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %} 
+{% block content %} 
+<div class="update-page">
+    <div class="box">
+        <div class="head">
+          <h2>Update Dashboard</h2>
+        </div>
+        <div class="cl">&nbsp;</div>
+    </div>
+
+<body>
+    <div class="container">
+        <h1>Update a Movie</h1>
+        <form method="GET" id="movie-form">
+            <label for="movie">Select Movie:</label>
+            <select name="movie" id="movie" onchange="this.form.submit()">
+                <option value="">Select a Movie</option>
+                {% for movie in movies %}
+                <option value="{{ movie.id }}" {% if selected_movie and selected_movie.id == movie.id %}selected{% endif %}>
+                    {{ movie.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+        
+        <form method="POST">
+            {% if selected_movie %}
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="{{ selected_movie.title }}" required>
+        
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="5">{{ selected_movie.description }}</textarea>
+        
+            <label for="genre">Genre:</label>
+            <input type="text" id="genre" name="genre" value="{{ selected_movie.genre }}">
+        
+            <label for="is_current">Currently Showing:</label>
+            <select id="is_current" name="is_current">
+                <option value="true" {% if selected_movie.is_current %}selected{% endif %}>Yes</option>
+                <option value="false" {% if not selected_movie.is_current %}selected{% endif %}>No</option>
+            </select>
+        
+            <button type="submit">Update Movie</button>
+            {% else %}
+            <p>Please select a movie to update.</p>
+            {% endif %}
+        </form>
+    </div>
+
+    <style>
+        .update-page .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .update-page h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .update-page label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .update-page input, .update-page textarea, .update-page select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .update-page button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff; /* Blue color for update action */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .update-page button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</body>
+</html>
+{% endblock %}

@@ -122,16 +122,15 @@ def search():
         movies = []
     return render_template("search_results.html", movies=movies, query=query)
 
-
 @main.route("/admin", endpoint="admin_dashboard")
 @login_required
 def admin_dashboard():
-    # 確認是否為管理員
+    # Ensure only admin users can access this route
     if current_user.username != "admin":
         flash("Access denied. Admins only.", "danger")
         return redirect(url_for("main.home"))
 
-    # Fetch all cinemas
+    # Fetch all cinemas and group movies by cinema
     cinemas = Cinema.query.all()
     cinema_movies = {}
     for cinema in cinemas:
@@ -141,8 +140,7 @@ def admin_dashboard():
             for screening in screening_times
             if screening.movie.is_current
         }
-        cinema_movies[cinema] = list(movies)
-
+        cinema_movies[cinema.name] = list(movies)
     return render_template("admin.html", cinema_movies=cinema_movies)
 
 
@@ -195,3 +193,176 @@ def cinema_screenings(cinema_id):
 def my_list():
     favorite_movies = current_user.favorite_movies
     return render_template("my_list.html", favorite_movies=favorite_movies)
+from datetime import datetime, timedelta
+
+def insert_create_fixed_screening_times(movies, cinemas):
+    """Create fixed screening times for insert movie in choosen cinemas."""
+    screenings = []
+    fixed_times = [
+        datetime.now().replace(hour=10, minute=0),
+        datetime.now().replace(hour=14, minute=0),
+        datetime.now().replace(hour=18, minute=0),
+    ]
+    for i, movie in enumerate(movies):
+        for cinema in cinemas:
+            for hall in cinema.halls:  # Assuming each cinema has `halls` as an attribute
+                for time in fixed_times:
+                    screenings.append(
+                        ScreeningTime(
+                            movie_id=movie.id,
+                            cinema_id=cinema.id,
+                            hall_id=hall.id,
+                            date=time + timedelta(days=i % 7),
+                            price=300 + (i % 5) * 10,  # Adjust pricing logic as needed
+                        )
+                    )
+    return screenings
+
+@main.route('/insert', methods=['GET', 'POST'])
+def insert_movie():
+    # Fetch all cinemas
+    cinemas = Cinema.query.all()
+    cinema_movies = {}
+    for cinema in cinemas:
+        screening_times = ScreeningTime.query.filter_by(cinema_id=cinema.id).all()
+        movies = {
+            screening.movie
+            for screening in screening_times
+            if screening.movie.is_current
+        }
+        cinema_movies[cinema.name] = list(movies)
+
+    if request.method == 'POST':
+        # Handle form submission
+        title = request.form.get('title')
+        description = request.form.get('description')
+        genre = request.form.get('genre')
+        release_date = request.form.get('release_date')
+        poster_url = f"/static/images/{request.form.get('poster_url', '').strip()}"
+        is_current = request.form.get('is_current') == 'true'
+        selected_cinema = request.form.get('cinema')  # Get the selected cinema
+
+        # Create a new Movie instance
+        new_movie = Movie(
+            title=title,
+            description=description,
+            genre=genre,
+            release_date=release_date,
+            poster_url=poster_url,
+            rating=0,
+            is_current=is_current
+        )
+
+        # Save the new movie to the database to generate its ID
+        db.session.add(new_movie)
+        db.session.commit()  # Commit to assign an ID to new_movie
+
+        # Generate fixed screening times for the new movie
+        selected_cinemas = (
+            cinemas if selected_cinema == 'all'
+            else [cinema for cinema in cinemas if cinema.name == selected_cinema]
+        )
+
+        screenings = []
+        fixed_times = [
+            datetime.now().replace(hour=10, minute=0, second=0, microsecond=0),
+            datetime.now().replace(hour=14, minute=0, second=0, microsecond=0),
+            datetime.now().replace(hour=18, minute=0, second=0, microsecond=0),
+        ]
+        for cinema in selected_cinemas:
+            for hall in cinema.halls:
+                for time in fixed_times:
+                    screenings.append(
+                        ScreeningTime(
+                            movie_id=new_movie.id,  # Use the ID of the committed movie
+                            cinema_id=cinema.id,
+                            hall_id=hall.id,
+                            date=time,
+                            price=300  # Set a fixed price
+                        )
+                    )
+
+        # Save the screenings to the database
+        db.session.add_all(screenings)
+        db.session.commit()
+
+        return redirect(url_for('main.admin_dashboard'))  # Redirect to admin page after successful insertion
+
+    # Render the insert.html template for GET requests
+    return render_template('insert.html', cinemas=cinemas, cinema_movies=cinema_movies)
+
+
+@main.route('/delete', methods=['GET', 'POST'])
+def delete_movie():
+    # Fetch all cinemas
+    cinemas = Cinema.query.all()
+
+    # Get selected cinema from query parameters or form data
+    selected_cinema = request.args.get('cinema') or request.form.get('cinema')
+
+    # Initialize movies list
+    movies = []
+    if selected_cinema:
+        if selected_cinema == 'all':
+            # Fetch all movies when "All" is selected
+            movies = Movie.query.all()
+        else:
+            # Fetch movies specific to the selected cinema
+            cinema = Cinema.query.filter_by(name=selected_cinema).first()
+            if cinema:
+                screenings = ScreeningTime.query.filter_by(cinema_id=cinema.id).all()
+                movies = {screening.movie for screening in screenings}
+                movies = list(movies)  # Convert to a list for rendering in the template
+
+    if request.method == 'POST':
+        # Handle deletion logic
+        movie_id = request.form.get('movie')
+        movie_to_delete = Movie.query.get(movie_id)
+
+        if not movie_to_delete:
+            flash("Movie not found", "error")
+            return redirect(url_for('main.delete_movie', cinema=selected_cinema))
+
+        # Delete screenings only for the selected cinema
+        cinema = Cinema.query.filter_by(name=selected_cinema).first()
+        if not cinema:
+            flash("Cinema not found", "error")
+            return redirect(url_for('main.delete_movie', cinema=selected_cinema))
+
+        ScreeningTime.query.filter_by(movie_id=movie_to_delete.id, cinema_id=cinema.id).delete()
+
+        # Check if the movie has screenings in other cinemas
+        remaining_screenings = ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).count()
+        if remaining_screenings == 0:
+            db.session.delete(movie_to_delete)
+        db.session.commit()
+        flash(f"Movie '{movie_to_delete.title}' has been deleted from '{selected_cinema}'.", "success")
+
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('delete.html', cinemas=cinemas, movies=movies, selected_cinema=selected_cinema)
+
+
+@main.route('/update', methods=['GET', 'POST'])
+def update_movie():
+    # Fetch all movies for the dropdown
+    movies = Movie.query.all()
+
+    # Get the selected movie ID from query parameters
+    selected_movie_id = request.args.get('movie')
+    selected_movie = Movie.query.get(selected_movie_id) if selected_movie_id else None
+
+    if request.method == 'POST' and selected_movie:
+        # Update movie attributes from the form
+        selected_movie.title = request.form.get('title', selected_movie.title)
+        selected_movie.description = request.form.get('description', selected_movie.description)
+        selected_movie.genre = request.form.get('genre', selected_movie.genre)
+        selected_movie.is_current = request.form.get('is_current') == 'true'
+
+        # Save changes to the database
+        db.session.commit()
+
+        flash(f"Movie '{selected_movie.title}' has been updated successfully.", "success")
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('update.html', movies=movies, selected_movie=selected_movie)
