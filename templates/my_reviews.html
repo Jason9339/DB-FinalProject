@@ -101,22 +101,27 @@
     {% endwith %}
 
     {% if reviews %}
-        <ul>
-            {% for review in reviews %}
-                <li>
-                    <h3>{{ review.movie.title }}</h3>
-                    <p><strong>Rating:</strong> {{ review.rate }}/5</p>
-                    <p>{{ review.content }}</p>
+    <ul>
+        {% for review in reviews %}
+            <li>
+                <h3>{{ review.movie.title }}</h3>
+                <p><strong>Rating:</strong> {{ review.rate }}/5</p>
+                <p>{{ review.content }}</p>
 
-                    <!-- Delete review button -->
-                    <form action="{{ url_for('main.delete_review', review_id=review.id) }}" method="POST">
-                        <button type="submit" style="background-color: #f44336; color: white; padding: 10px; border: none; border-radius: 5px;">Delete</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
+                <!-- Edit review button -->
+                <a href="{{ url_for('main.edit_review', review_id=review.id) }}" 
+                   style="background-color: #4CAF50; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Edit</a>
+
+                <!-- Delete review button -->
+                <form action="{{ url_for('main.delete_review', review_id=review.id) }}" method="POST">
+                    <button type="submit" style="background-color: #f44336; color: white; padding: 10px; border: none; border-radius: 5px;">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
     {% else %}
         <p class="no-reviews">You have not submitted any reviews yet.</p>
     {% endif %}
+
 </body>
 </html>

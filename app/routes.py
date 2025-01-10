@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
-from .models import User, FriendRequest
+from .models import User, FriendRequest, Review
 from flask import jsonify
 from flask import session
 from werkzeug.security import generate_password_hash
@@ -402,3 +402,28 @@ def profile_edit():
 
     # 如果是 GET 請求，顯示編輯頁面
     return render_template('profile_edit.html')
+
+@main.route('/edit_review/<int:review_id>', methods=['GET', 'POST'])
+@login_required
+def edit_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    
+    # 確保只有評論的作者能夠編輯評論
+    if review.user_id != current_user.id:
+        flash('You do not have permission to edit this review.', 'error')
+        return redirect(url_for('main.my_reviews'))
+
+    if request.method == 'POST':
+        # 獲取更新的內容
+        new_content = request.form['content']
+        new_rating = request.form['rating']
+        
+        # 更新評論
+        review.content = new_content
+        review.rate = new_rating
+        db.session.commit()
+
+        flash('Review updated successfully!', 'success')
+        return redirect(url_for('main.my_reviews'))
+
+    return render_template('edit_review.html', review=review)
