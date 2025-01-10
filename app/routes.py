@@ -1,12 +1,60 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+# app/routes.py
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    session,
+    jsonify,
+)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Movie, Cinema, ScreeningTime, Booking
+
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review, Hall
 from app.forms import RegistrationForm, LoginForm, BookingForm
+from datetime import datetime
+from sqlalchemy import and_, exists
 
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
+import app
 
+def update_movie_status():
+    """
+    更新電影的 is_current 狀態
+    根據是否有未來的放映場次來判斷電影是否為當前上映中
+    """
+    current_time = datetime.now()
+    
+    # 找出所有電影
+    movies = Movie.query.all()
+    
+    for movie in movies:
+        # 檢查該電影是否有未來的放映場次
+        has_future_screenings = db.session.query(exists().where(
+            and_(
+                ScreeningTime.movie_id == movie.id,
+                ScreeningTime.date >= current_time
+            )
+        )).scalar()
+        
+        # 更新電影狀態
+        if movie.is_current != has_future_screenings:
+            movie.is_current = has_future_screenings
+    
+    # 提交所有更改
+    try:
+        db.session.commit()
+        print(f"已更新所有電影狀態於 {current_time}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"更新電影狀態時發生錯誤: {str(e)}")
+
+@main.before_request
+def before_request():
+    update_movie_status()
 
 @main.route("/")
 def home():
@@ -27,8 +75,24 @@ def home():
 @main.route("/movie/<int:movie_id>")
 def movie_detail(movie_id):
     movie = Movie.query.get_or_404(movie_id)
-    screenings = ScreeningTime.query.filter_by(movie_id=movie_id).all()
-    return render_template("movie_detail.html", movie=movie, screenings=screenings)
+    current_time = datetime.now()
+    reviews = (
+        Review.query.filter_by(movie_id=movie_id)
+        .join(User, Review.user_id == User.id)
+        .add_columns(User.username, Review.content, Review.rate)
+        .all()
+    )
+    average_rating = (
+        db.session.query(db.func.avg(Review.rate))
+        .filter(Review.movie_id == movie_id)
+        .scalar()
+    )
+    average_rating = round(average_rating, 1) if average_rating else 0
+    screenings = ScreeningTime.query.filter(
+        ScreeningTime.movie_id == movie_id,
+        ScreeningTime.date >= current_time  
+    ).all()
+    return render_template("movie_detail.html", movie=movie, reviews=reviews, screenings=screenings, average_rating=average_rating)
 
 
 @main.route("/favorite/<int:movie_id>", methods=["POST"])
@@ -46,29 +110,119 @@ def toggle_favorite(movie_id):
 @main.route("/book/<int:screening_id>", methods=["GET", "POST"])
 @login_required
 def book_seat(screening_id):
+
     screening = ScreeningTime.query.get_or_404(screening_id)
     form = BookingForm()
 
-    if form.validate_on_submit():
-        existing_booking = Booking.query.filter_by(
-            screening_id=screening_id, seat_number=form.seat_number.data
-        ).first()
+    bookings = Booking.query.filter_by(screening_id=screening_id).all()
+    screening.cinema_id
+    total_seats = (
+        Hall.query.with_entities(Hall.size).filter_by(id=screening.hall.id).one()[0]
+    )
+    # 定義座位表（假設一個固定座位結構）
+    seats_per_row = 10
+    total_rows = total_seats // seats_per_row
 
-        if existing_booking:
-            flash("This seat is already booked", "danger")
-            return render_template("booking.html", form=form, screening=screening)
+    seating_chart = [  # 初始化座位表
+        [
+            {"seat_number": row * seats_per_row + seat + 1, "status": "available"}
+            for seat in range(seats_per_row)
+        ]
+        for row in range(total_rows)
+    ]
+    # app.logging.debug(seating_chart)
+    # 標記已預約的座位
+    for booking in bookings:
+        seat_number = int(booking.seat_number)
+        row = (seat_number - 1) // seats_per_row
+        seat = (seat_number - 1) % seats_per_row
 
-        booking = Booking(
-            user_id=current_user.id,
-            screening_id=screening_id,
-            seat_number=form.seat_number.data,
-        )
-        db.session.add(booking)
-        db.session.commit()
-        flash("Booking successful!", "success")
-        return redirect(url_for("main.home"))
+        # 標記該座位為已預約
+        if 0 <= row < total_rows and 0 <= seat < seats_per_row:
+            seating_chart[row][seat]["status"] = "booked"
+        else:
+            print(f"Invalid seat number: {seat_number}")
 
-    return render_template("booking.html", form=form, screening=screening)
+    # 根據 screening_id 過濾相關資料並生成選項
+    form.cinema.choices = [(screening.cinema.id, screening.cinema.name)]
+
+    form.hall.choices = [(screening.hall.id, screening.hall.name)]
+
+    form.movie.choices = [(screening.movie.id, screening.movie.title)]
+
+    form.screening_time.choices = [(screening.id, screening.date)]
+    bill_detail = {
+        "name": User.query.filter_by(id=current_user.id).first().username,
+        "cinema": screening.cinema.name,
+        "hall": screening.hall.name,
+        "movie": screening.movie.title,
+        "id": [],
+        "price": [],
+    }
+    if request.method == "POST":
+        app.logging.debug(
+            f"Form data: {request.form}"
+        )  ## 還要設定 cinima 和 movie screening_time
+        if form.validate_on_submit():
+            # app.logging.debug(form.seat_number.data.split(','))
+            for seat in form.seat_number.data.split(","):
+                # Check if seat is already booked
+                existing_booking = Booking.query.filter_by(
+                    screening_id=screening_id, seat_number=seat
+                ).first()
+
+                if existing_booking:
+                    flash("This seat is already booked", "danger")
+                    return render_template(
+                        "booking.html", form=form, screening=screening
+                    )
+
+                # Create new booking
+                booking = Booking(
+                    user_id=current_user.id,
+                    screening_id=screening_id,
+                    seat_number=seat,
+                )
+                db.session.add(booking)
+                db.session.commit()
+                flash("Booking successful!", "success")
+                bill_detail["id"].append(booking.id)
+                bill_detail["price"].append(
+                    ScreeningTime.query.with_entities(ScreeningTime.price)
+                    .filter_by(id=screening_id)
+                    .one()[0]
+                )
+
+            # app.logging.debug(bill_detail)
+            session["bill_detail"] = bill_detail
+            return redirect(url_for("main.payment"))
+        else:
+            app.logging.debug(f"Form errors: {form.errors}")
+
+    return render_template(
+        "booking.html", form=form, screening=screening, seating_chart=seating_chart
+    )
+
+
+@main.route("/book/bill/", methods=["GET", "POST"])
+@login_required
+def payment():
+    bill_detail = session.get("bill_detail", [])
+    app.logging.debug(bill_detail)
+    name = bill_detail["name"]
+    ids = bill_detail["id"]
+    price = bill_detail["price"]
+    price_sum = sum(price)
+    return render_template(
+        "bill.html",
+        name=name,
+        book_id=ids,
+        price=price,
+        price_sum=price_sum,
+        cinema=bill_detail["cinema"],
+        hall=bill_detail["hall"],
+        movie=bill_detail["movie"],
+    )
 
 
 @auth.route("/register", methods=["GET", "POST"])
@@ -86,14 +240,8 @@ def register():
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
+    session.pop('_flashes', None)
     form = LoginForm()
-    # if form.validate_on_submit():
-    #     # admin=User.query.filter_by(email=form.email.data).first()
-    #     # Special case: Check for admin credentials
-    #     # login_user(admin)
-    #     if form.email.data == "admin@example.com" and form.password.data == "admin123":
-    #         # Redirect to admin dashboard if credentials match
-    #         return redirect(url_for("main.admin_dashboard"))
 
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -109,6 +257,7 @@ def login():
 @auth.route("/logout")
 @login_required
 def logout():
+    session.pop('_flashes', None)
     logout_user()
     return redirect(url_for("main.home"))
 
@@ -143,6 +292,37 @@ def admin_dashboard():
         cinema_movies[cinema.name] = list(movies)
     return render_template("admin.html", cinema_movies=cinema_movies)
 
+
+
+@main.route('/submit_review/<int:movie_id>', methods=['POST'])
+@login_required
+def submit_review(movie_id):
+    try:
+        rate = float(request.form.get('rate'))
+        review_content = request.form.get('review')
+
+        if not (0.5 <= rate <= 5.0):
+            flash("Rate must be between 0.5 and 5.0.", "error")
+            return redirect(url_for('main.movie_detail', movie_id=movie_id))
+
+        if not review_content.strip():
+            flash("Review content cannot be empty.", "error")
+            return redirect(url_for('main.movie_detail', movie_id=movie_id))
+    except ValueError:
+        flash("Invalid rating value.", "error")
+        return redirect(url_for('main.movie_detail', movie_id=movie_id))
+
+    new_review = Review(
+        user_id=current_user.id,
+        movie_id=movie_id,
+        content=review_content.strip(),
+        rate=rate,
+    )
+    db.session.add(new_review)
+    db.session.commit()
+
+    flash("Your review has been submitted successfully!", "success")
+    return redirect(url_for('main.movie_detail', movie_id=movie_id))
 
 @main.route("/movies/showing")
 def movies_showing():
@@ -193,6 +373,7 @@ def cinema_screenings(cinema_id):
 def my_list():
     favorite_movies = current_user.favorite_movies
     return render_template("my_list.html", favorite_movies=favorite_movies)
+
 from datetime import datetime, timedelta
 
 def insert_create_fixed_screening_times(movies, cinemas):
@@ -220,7 +401,6 @@ def insert_create_fixed_screening_times(movies, cinemas):
 
 @main.route('/insert', methods=['GET', 'POST'])
 def insert_movie():
-    # Fetch all cinemas
     cinemas = Cinema.query.all()
     cinema_movies = {}
     for cinema in cinemas:
@@ -233,16 +413,14 @@ def insert_movie():
         cinema_movies[cinema.name] = list(movies)
 
     if request.method == 'POST':
-        # Handle form submission
         title = request.form.get('title')
         description = request.form.get('description')
         genre = request.form.get('genre')
         release_date = request.form.get('release_date')
         poster_url = f"/static/images/{request.form.get('poster_url', '').strip()}"
-        is_current = request.form.get('is_current') == 'true'
-        selected_cinema = request.form.get('cinema')  # Get the selected cinema
+        selected_cinema = request.form.get('cinema')
 
-        # Create a new Movie instance
+        # Create new movie with is_current defaulting to False
         new_movie = Movie(
             title=title,
             description=description,
@@ -250,14 +428,12 @@ def insert_movie():
             release_date=release_date,
             poster_url=poster_url,
             rating=0,
-            is_current=is_current
+            is_current=False  # Default value, will be updated by update_movie_status()
         )
 
-        # Save the new movie to the database to generate its ID
         db.session.add(new_movie)
-        db.session.commit()  # Commit to assign an ID to new_movie
+        db.session.commit()
 
-        # Generate fixed screening times for the new movie
         selected_cinemas = (
             cinemas if selected_cinema == 'all'
             else [cinema for cinema in cinemas if cinema.name == selected_cinema]
@@ -274,23 +450,40 @@ def insert_movie():
                 for time in fixed_times:
                     screenings.append(
                         ScreeningTime(
-                            movie_id=new_movie.id,  # Use the ID of the committed movie
+                            movie_id=new_movie.id,
                             cinema_id=cinema.id,
                             hall_id=hall.id,
                             date=time,
-                            price=300  # Set a fixed price
+                            price=300
                         )
                     )
 
-        # Save the screenings to the database
         db.session.add_all(screenings)
         db.session.commit()
 
-        return redirect(url_for('main.admin_dashboard'))  # Redirect to admin page after successful insertion
+        # is_current will be automatically updated by the before_request handler
+        return redirect(url_for('main.admin_dashboard'))
 
-    # Render the insert.html template for GET requests
     return render_template('insert.html', cinemas=cinemas, cinema_movies=cinema_movies)
 
+@main.route('/update', methods=['GET', 'POST'])
+def update_movie():
+    movies = Movie.query.all()
+    selected_movie_id = request.args.get('movie')
+    selected_movie = Movie.query.get(selected_movie_id) if selected_movie_id else None
+
+    if request.method == 'POST' and selected_movie:
+        selected_movie.title = request.form.get('title', selected_movie.title)
+        selected_movie.description = request.form.get('description', selected_movie.description)
+        selected_movie.genre = request.form.get('genre', selected_movie.genre)
+        # Remove is_current update - it's handled automatically
+        
+        db.session.commit()
+
+        flash(f"Movie '{selected_movie.title}' has been updated successfully.", "success")
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('update.html', movies=movies, selected_movie=selected_movie)
 
 @main.route('/delete', methods=['GET', 'POST'])
 def delete_movie():
@@ -341,28 +534,3 @@ def delete_movie():
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('delete.html', cinemas=cinemas, movies=movies, selected_cinema=selected_cinema)
-
-
-@main.route('/update', methods=['GET', 'POST'])
-def update_movie():
-    # Fetch all movies for the dropdown
-    movies = Movie.query.all()
-
-    # Get the selected movie ID from query parameters
-    selected_movie_id = request.args.get('movie')
-    selected_movie = Movie.query.get(selected_movie_id) if selected_movie_id else None
-
-    if request.method == 'POST' and selected_movie:
-        # Update movie attributes from the form
-        selected_movie.title = request.form.get('title', selected_movie.title)
-        selected_movie.description = request.form.get('description', selected_movie.description)
-        selected_movie.genre = request.form.get('genre', selected_movie.genre)
-        selected_movie.is_current = request.form.get('is_current') == 'true'
-
-        # Save changes to the database
-        db.session.commit()
-
-        flash(f"Movie '{selected_movie.title}' has been updated successfully.", "success")
-        return redirect(url_for('main.admin_dashboard'))
-
-    return render_template('update.html', movies=movies, selected_movie=selected_movie)

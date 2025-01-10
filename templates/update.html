@@ -33,13 +33,7 @@
         
             <label for="genre">Genre:</label>
             <input type="text" id="genre" name="genre" value="{{ selected_movie.genre }}">
-        
-            <label for="is_current">Currently Showing:</label>
-            <select id="is_current" name="is_current">
-                <option value="true" {% if selected_movie.is_current %}selected{% endif %}>Yes</option>
-                <option value="false" {% if not selected_movie.is_current %}selected{% endif %}>No</option>
-            </select>
-        
+                
             <button type="submit">Update Movie</button>
             {% else %}
             <p>Please select a movie to update.</p>

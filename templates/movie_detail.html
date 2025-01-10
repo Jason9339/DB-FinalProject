@@ -1,28 +1,340 @@
-{% extends "base.html" %} {% block title %}{{ movie.title }}{% endblock %} {%
-block content %}
-<h1>{{ movie.title }}</h1>
-<p>{{ movie.description }}</p>
-<p>Genre: {{ movie.genre }}</p>
+{% extends "base.html" %}
+{% block title %}{{ movie.title }}{% endblock %}
+{% block extra_head %}
+<style>
+.detail-container {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
 
-<h2>Screening Times</h2>
-<ul>
-  {% for screening in screenings %}
-  <li>
-    {{ screening.date }} at {{ screening.cinema.name }}
-    <a href="{{ url_for('main.book_seat', screening_id=screening.id) }}"
-      >Book Seat</a
-    >
-  </li>
-  {% endfor %}
-</ul>
+.detail-poster-section {
+  flex: 0 0 300px;
+}
 
-<form
-  method="post"
-  action="{{ url_for('main.toggle_favorite', movie_id=movie.id) }}"
->
-  <button type="submit">
-    {% if movie in current_user.favorite_movies %} Remove from Favorites {% else
-    %} Add to Favorites {% endif %}
-  </button>
-</form>
+.detail-poster-wrapper {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.detail-poster {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.detail-favorite-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.detail-favorite-btn:hover {
+  background: #34495e;
+}
+
+.detail-info {
+  flex: 1;
+}
+
+.detail-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.detail-rating {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-rating-value {
+  font-size: 1.25rem;
+  color: #f1c40f;
+}
+
+.detail-metadata {
+  margin-bottom: 2rem;
+}
+
+.detail-metadata p {
+  margin: 0.5rem 0;
+  color: #ecf0f1;
+}
+
+.detail-metadata strong {
+  color: #bdc3c7;
+  margin-right: 0.5rem;
+}
+
+.detail-screenings {
+  background: #2c3e50;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.detail-screenings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.detail-screenings-table th {
+  text-align: left;
+  padding: 1rem;
+  background: #34495e;
+  color: #ecf0f1;
+}
+
+.detail-screenings-table td {
+  padding: 1rem;
+  background: #3a506b;
+  color: #fff;
+}
+
+.detail-book-btn {
+  background: #27ae60;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+
+.detail-book-btn:hover {
+  background: #2ecc71;
+}
+
+.detail-review-section {
+  margin-top: 2rem;
+}
+
+.detail-review-form {
+  background: #2c3e50;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.detail-review-input {
+  width: 85%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid #34495e;
+  border-radius: 4px;
+  background: #34495e;
+  color: #fff;
+}
+
+.detail-rating-select {
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid #34495e;
+  border-radius: 4px;
+  background: #34495e;
+  color: #fff;
+  width: 100%;
+  cursor: pointer;
+}
+
+.detail-rating-select option {
+  padding: 0.5rem;
+}
+
+.detail-review-submit {
+  background: #2980b9;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.detail-review-submit:hover {
+  background: #3498db;
+}
+
+.detail-reviews-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 2rem;
+}
+
+.detail-review-item {
+  background: #2c3e50;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.detail-review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: #bdc3c7;
+}
+
+.detail-review-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #bdc3c7;
+}
+
+.no-screenings-message {
+  color: #ecf0f1;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+  <div class="detail-poster-section">
+    <div class="detail-poster-wrapper">
+      <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="detail-poster">
+    </div>
+    
+    <div class="detail-actions">
+      <form method="post" action="{{ url_for('main.toggle_favorite', movie_id=movie.id) }}">
+        <button type="submit" class="detail-favorite-btn">
+          {% if movie in current_user.favorite_movies %}
+            Remove from Favorites
+          {% else %}
+            Add to Favorites
+          {% endif %}
+        </button>
+      </form>
+      
+      <button id="toggle-review-form" class="detail-favorite-btn">Write a Review</button>
+      
+      <form id="review-form" method="post" action="{{ url_for('main.submit_review', movie_id=movie.id) }}" class="detail-review-form" style="display: none;">
+        <label for="rate" class="detail-review-label">Rating:</label>
+        <select id="rate" name="rate" required class="detail-rating-select">
+          <option value="">Select a rating</option>
+          <option value="0.5">0.5 - Very Poor</option>
+          <option value="1.0">1.0 - Poor</option>
+          <option value="1.5">1.5 - Below Average</option>
+          <option value="2.0">2.0 - Average</option>
+          <option value="2.5">2.5 - Above Average</option>
+          <option value="3.0">3.0 - Good</option>
+          <option value="3.5">3.5 - Very Good</option>
+          <option value="4.0">4.0 - Excellent</option>
+          <option value="4.5">4.5 - Outstanding</option>
+          <option value="5.0">5.0 - Perfect</option>
+        </select>
+        
+        <label for="review" class="detail-review-label">Your Review:</label>
+        <textarea name="review" id="review" placeholder="Write your review here..." required class="detail-review-input" rows="4"></textarea>
+        
+        <button type="submit" class="detail-review-submit">Submit Review</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="detail-info">
+    <h1 class="detail-title">{{ movie.title }}</h1>
+    
+    <div class="detail-rating">
+      <span class="detail-rating-value">★ {{ average_rating if average_rating else '0' }}/5.0</span>
+      <span>({{ movie.comments_count }} reviews)</span>
+    </div>
+    
+    <div class="detail-metadata">
+      <p><strong>Release Date:</strong>{{ movie.release_date }}</p>
+      <p><strong>Genre:</strong>{{ movie.genre }}</p>
+      <p><strong>Description:</strong>{{ movie.description }}</p>
+    </div>
+
+    <div class="detail-screenings">
+      <h2>Screening Times</h2>
+      {% if screenings %}
+        <table class="detail-screenings-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Cinema</th>
+              <th>Hall</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for screening in screenings %}
+            <tr>
+              <td>{{ screening.date.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ screening.cinema.name }}</td>
+              <td>{{ screening.hall.name }}</td>
+              <td>${{ screening.price }}</td>
+              <td>
+                <a href="{{ url_for('main.book_seat', screening_id=screening.id) }}" class="detail-book-btn">
+                  Book Now
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="no-screenings-message">目前沒有場次</p>
+      {% endif %}
+    </div>
+
+    <div class="detail-review-section">
+      <h2>Reviews</h2>
+      {% if reviews %}
+        <ul class="detail-reviews-list">
+          {% for review in reviews %}
+          <li class="detail-review-item">
+            <div class="detail-review-header">
+              <strong>{{ review[1] }}</strong>
+              <span>Rating: {{ review.rate }}/5.0</span>
+            </div>
+            <p>{{ review[2] }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No reviews yet. Be the first to leave a review!</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleButton = document.getElementById('toggle-review-form');
+  const reviewForm = document.getElementById('review-form');
+
+  toggleButton.addEventListener('click', function() {
+    if (reviewForm.style.display === 'none' || reviewForm.style.display === '') {
+      reviewForm.style.display = 'block';
+      toggleButton.textContent = 'Cancel Review';
+    } else {
+      reviewForm.style.display = 'none';
+      toggleButton.textContent = 'Write a Review';
+    }
+  });
+});
+</script>
 {% endblock %}

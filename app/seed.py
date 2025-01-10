@@ -3,6 +3,7 @@ from app import db
 from app.models import User, Movie, Cinema, Hall, ScreeningTime, Review
 import random
 
+# 資料庫初始化
 def seed_movies():
     movies = [
         Movie(
@@ -105,23 +106,41 @@ def seed_cinemas():
 
 
 def create_fixed_screening_times(movies, cinemas):
-    """為每部電影創建固定場次"""
+    """為每部電影創建前一周、當前周、後一周的隨機放映時間"""
     screenings = []
-    fixed_times = [
+    # 設置可能的放映時間範圍
+    possible_times = [
         datetime.now().replace(hour=10, minute=0),
         datetime.now().replace(hour=14, minute=0),
         datetime.now().replace(hour=18, minute=0),
     ]
+    
+    # 隨機選擇5個不同的放映時段
     for i, movie in enumerate(movies):
-        for cinema in cinemas:
-            for hall in cinema.halls:
-                for time in fixed_times:
+        # 每部電影選擇5個放映時間
+        selected_times = []
+        
+        # 保證有2部電影放映時間全部過期
+        if i < 2:
+            # 設置過期的放映時間（如過去一週）
+            for j in range(5):
+                selected_times.append(datetime.now() - timedelta(days=random.randint(8, 14)) + timedelta(hours=random.choice([10, 14, 18])))
+        else:
+            # 為其他電影設置當前時間及前後一週的時間
+            for j in range(5):
+                time_shift = random.choice([-7, 0, 7])  # 隨機選擇 -7, 0, 或 7 來代表前一周、當前周、後一周
+                selected_times.append(random.choice(possible_times) + timedelta(days=time_shift))
+        
+        # 為每個選擇的時間生成放映場次
+        for time in selected_times:
+            for cinema in cinemas:
+                for hall in cinema.halls:
                     screenings.append(
                         ScreeningTime(
                             movie_id=movie.id,
                             cinema_id=cinema.id,
                             hall_id=hall.id,
-                            date=time + timedelta(days=i % 7),
+                            date=time,
                             price=300 + (i % 5) * 10,
                         )
                     )
@@ -147,6 +166,9 @@ def seed_users():
 
 def seed_reviews(users, movies):
     reviews = []
+    # 可選的評分範圍，間隔為 0.5
+    possible_ratings = [3.0, 3.5, 4.0, 4.5, 5.0]
+
     # 為每部電影創建多個評論，確保有足夠的數據來計算平均分
     for movie in movies:
         # 每部電影隨機生成2-5條評論
@@ -156,11 +178,10 @@ def seed_reviews(users, movies):
                 user_id=random.choice(users).id,
                 movie_id=movie.id,
                 content=f"這是一條關於《{movie.title}》的影評。",
-                rate=random.uniform(3.0, 5.0)  # 生成3.0到5.0之間的隨機評分
+                rate=random.choice(possible_ratings)  # 隨機選擇一個固定評分
             )
             reviews.append(review)
     return reviews
-
 
 def init_db():
     """初始化數據庫"""
