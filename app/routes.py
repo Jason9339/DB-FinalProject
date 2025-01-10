@@ -16,7 +16,7 @@ from app.models import User, Movie, Cinema, ScreeningTime, Booking, Review, Hall
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
 from sqlalchemy import and_, exists
-
+from sqlalchemy.exc import IntegrityError
 main = Blueprint("main", __name__)
 auth = Blueprint("auth", __name__)
 import app
@@ -590,31 +590,41 @@ def delete_cinema():
 
     return render_template('delete_cinema.html', cinemas=cinemas)
 
-from sqlalchemy.exc import IntegrityError
-
 @main.route('/add_screeningtime', methods=['GET', 'POST'])
 def add_screeningtime():
-    # Fetch required data for dropdowns
+    # Fetch all cinemas for the dropdown
     cinemas = Cinema.query.all()
-    movies = Movie.query.filter_by(is_current=True).all()
-    halls = Hall.query.all()
+
+    # Get selected cinema from the query parameters
+    selected_cinema_name = request.args.get('cinema')
+    selected_cinema = None
+    movies = []
+
+    # If a cinema is selected, fetch its movies
+    if selected_cinema_name:
+        selected_cinema = Cinema.query.filter_by(name=selected_cinema_name).first()
+        if selected_cinema:
+            # Fetch movies currently being screened in the selected cinema
+            screenings = ScreeningTime.query.filter_by(cinema_id=selected_cinema.id).all()
+            movies = {screening.movie for screening in screenings}  # Unique movies
+            movies = list(movies)  # Convert to a list for rendering
 
     if request.method == 'POST':
-        # Retrieve form data
+        # Handle form submission
         movie_id = request.form.get('movie')
-        cinema_id = request.form.get('cinema')
+        cinema_id = request.form.get('cinema_id')
         hall_id = request.form.get('hall')
         date = request.form.get('date')
         price = request.form.get('price')
 
-        # Convert date to a proper DateTime object
+        # Validate and process the date
         try:
             screening_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            flash("Invalid date format. Please use 'YYYY-MM-DD HH:MM:SS'.", "danger")
-            return redirect(url_for('main.add_screeningtime'))
+            flash("Invalid date format. Use 'YYYY-MM-DD HH:MM:SS'.", "danger")
+            return redirect(url_for('main.add_screeningtime', cinema=cinema_id))
 
-        # Check if the screening time already exists
+        # Check if the screening already exists
         existing_screening = ScreeningTime.query.filter_by(
             movie_id=movie_id,
             cinema_id=cinema_id,
@@ -625,7 +635,7 @@ def add_screeningtime():
         if existing_screening:
             flash("This screening time already exists.", "danger")
         else:
-            # Create and add the new screening time
+            # Create and add the new screening
             new_screening = ScreeningTime(
                 movie_id=movie_id,
                 cinema_id=cinema_id,
@@ -633,15 +643,15 @@ def add_screeningtime():
                 date=screening_date,
                 price=price
             )
+            db.session.add(new_screening)
+            db.session.commit()
+            flash("Screening time added successfully.", "success")
 
-            try:
-                db.session.add(new_screening)
-                db.session.commit()
-                flash("Screening time added successfully.", "success")
-            except IntegrityError:
-                db.session.rollback()
-                flash("Failed to add screening time. Please try again.", "danger")
+        return redirect(url_for('main.admin_dashboard'))
 
-        return redirect(url_for('main.add_dashboard'))
-
-    return render_template('add_screeningtime.html', cinemas=cinemas, movies=movies, halls=halls)
+    return render_template(
+        'add_screeningtime.html',
+        cinemas=cinemas,
+        movies=movies,
+        selected_cinema=selected_cinema
+    )

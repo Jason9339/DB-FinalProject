@@ -11,27 +11,40 @@
 
     <div class="container">
         <h1>Add a Screening Time</h1>
-        <form method="POST">
+
+        <!-- Cinema Selection Form -->
+        <form method="GET" id="cinema-form">
             <label for="cinema">Select Cinema:</label>
-            <select name="cinema" id="cinema" required>
+            <select name="cinema" id="cinema" onchange="this.form.submit()">
                 <option value="">Choose a Cinema</option>
                 {% for cinema in cinemas %}
-                <option value="{{ cinema.id }}">{{ cinema.name }} - {{ cinema.location }}</option>
+                <option value="{{ cinema.name }}" {% if selected_cinema and selected_cinema.name == cinema.name %}selected{% endif %}>
+                    {{ cinema.name }}
+                </option>
                 {% endfor %}
             </select>
+        </form>
+
+        <!-- Screening Time Form -->
+        <form method="POST">
+            {% if selected_cinema %}
+            <input type="hidden" name="cinema_id" value="{{ selected_cinema.id }}">
 
             <label for="movie">Select Movie:</label>
             <select name="movie" id="movie" required>
-                <option value="">Choose a Movie</option>
+                {% if movies %}
                 {% for movie in movies %}
                 <option value="{{ movie.id }}">{{ movie.title }}</option>
                 {% endfor %}
+                {% else %}
+                <option value="">No movies available</option>
+                {% endif %}
             </select>
 
             <label for="hall">Select Hall:</label>
             <select name="hall" id="hall" required>
                 <option value="">Choose a Hall</option>
-                {% for hall in halls %}
+                {% for hall in selected_cinema.halls %}
                 <option value="{{ hall.id }}">{{ hall.name }}</option>
                 {% endfor %}
             </select>
@@ -43,13 +56,16 @@
             <input type="number" id="price" name="price" step="0.01" placeholder="Enter the price" required>
 
             <button type="submit">Add Screening Time</button>
+            {% else %}
+            <p>Please select a cinema to see available movies and halls.</p>
+            {% endif %}
         </form>
     </div>
 
     <style>
         .admin-icon {
             text-align: right;
-            margin: 10px 20px;
+             margin: 10px 20px;
         }
         .admin-icon img {
             width: 30px;
