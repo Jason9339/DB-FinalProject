@@ -345,5 +345,24 @@ def delete_movie():
 
 @main.route('/update', methods=['GET', 'POST'])
 def update_movie():
-    # Logic to handle updating movies (if needed)
-    return render_template('update.html')
+    # Fetch all movies for the dropdown
+    movies = Movie.query.all()
+
+    # Get the selected movie ID from query parameters
+    selected_movie_id = request.args.get('movie')
+    selected_movie = Movie.query.get(selected_movie_id) if selected_movie_id else None
+
+    if request.method == 'POST' and selected_movie:
+        # Update movie attributes from the form
+        selected_movie.title = request.form.get('title', selected_movie.title)
+        selected_movie.description = request.form.get('description', selected_movie.description)
+        selected_movie.genre = request.form.get('genre', selected_movie.genre)
+        selected_movie.is_current = request.form.get('is_current') == 'true'
+
+        # Save changes to the database
+        db.session.commit()
+
+        flash(f"Movie '{selected_movie.title}' has been updated successfully.", "success")
+        return redirect(url_for('main.admin_dashboard'))
+
+    return render_template('update.html', movies=movies, selected_movie=selected_movie)
