@@ -14,7 +14,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 
 from flask import request, redirect, url_for
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking, Hall
 from .models import User, FriendRequest, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
@@ -463,9 +463,9 @@ def remove_friend(friend_id):
         ).delete()
         
         db.session.commit()
-        flash(f'你已成功删除 {friend.username} 作为好友。', 'success')
+        flash(f'你已成功删除 {friend.username} 作為好友。', 'success')
     else:
-        flash('无法找到该好友。', 'error')
+        flash('無法找到好友。', 'error')
 
     return redirect(url_for('main.user_friends'))
 
@@ -660,7 +660,7 @@ def get_booked_seats():
         {
             'movie_title': Movie.query.get(booking.screening.movie_id).title,  # 获取电影名称
             'seat_number': booking.seat_number,
-            'screening_time': booking.screening.time.strftime('%Y-%m-%d %H:%M')  # 格式化时间
+            'screening_time': booking.screening.date.strftime('%Y-%m-%d %H:%M')  # 格式化时间
         }
         for booking in bookings
     ]
