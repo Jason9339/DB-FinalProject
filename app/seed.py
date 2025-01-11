@@ -129,19 +129,18 @@ def create_fixed_screening_times(movies, cinemas):
 
 
 def create_admin():
-    admin = User(username="admin", email="admin@example.com")
+    admin = User(id="000",username="admin", email="admin@example.com")
     admin.set_password("admin123")
     return admin
 
 
 def seed_users():
+    
     users = [
         User(username="user1", email="user1@example.com"),
         User(username="user2", email="user2@example.com"),
         User(username="user3", email="user3@example.com"),
     ]
-    for user in users:
-        user.set_password("password123")
     return users
 
 

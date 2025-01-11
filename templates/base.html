@@ -33,6 +33,7 @@
             <li><a href="#">Booking</a></li>
             {% if current_user.is_authenticated %}
             <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
+            <li><a href="{{ url_for('main.profile') }}">Profile</a></li>
             <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
             {% else %}
             <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>

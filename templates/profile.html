@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    /* Header Section */
+    .header {
+      background-image: url('https://via.placeholder.com/1200x300'); /* 替換為範例圖片URL */
+      background-size: cover;
+      background-position: center;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Navigation */
+    .nav {
+      background: #1e1e1e;
+      padding: 10px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .nav a {
+      color: #ffffff;
+      text-decoration: none;
+      margin: 0 15px;
+      font-size: 16px;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+
+    .nav a:hover {
+      color: #007bff;
+    }
+
+    .nav a.active {
+      color: #ff4d4d; /* 紅色表示當前頁面 */
+    }
+
+    /* Content Layout */
+    .container {
+      display: flex;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 25%;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-pic {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto;
+      display: block;
+      border: 2px solid #007bff;
+    }
+
+    .profile-info {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .profile-info h2 {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .profile-info p {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .menu button {
+      display: block;
+      width: 100%;
+      background: #007bff;
+      color: #fff;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .menu button:hover {
+      background: #0056b3;
+    }
+
+    /* Main Content */
+    .main-content {
+      width: 50%;
+      margin: 0 20px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .post h3 {
+      color: #ffffff;
+    }
+
+    .post p {
+      color: #cccccc;
+    }
+
+    .post img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+    
+    /* Right Sidebar */
+    .right-sidebar {
+      width: 25%;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .right-sidebar h3 {
+      color: #ffffff;
+    }
+
+    .movie button {
+      background: #007bff;
+      color: #ffffff;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .movie button:hover {
+      background: #0056b3;
+    }
+
+    .search-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;  /* 粗體 */
+      font-size: 18px;    /* 放大文字 */
+      color: #ffffff;        /* 字體顏色 */
+    }
+  
+    /* 按鈕樣式 */
+    .search-btn {
+      background-color: #007bff;  /* 藍色背景 */
+      color: white;               /* 白色文字 */
+      padding: 10px 20px;         /* 上下左右內邊距 */
+      border: none;               /* 無邊框 */
+      border-radius: 5px;         /* 圓角 */
+      cursor: pointer;            /* 滑鼠指標為點擊狀態 */
+      font-size: 16px;             /* 按鈕文字大小 */
+      transition: background-color 0.3s;  /* 背景顏色過渡效果 */
+    }
+  
+    /* 按鈕滑過樣式 */
+    .search-btn:hover {
+      background-color: #0056b3;  /* 滑過時背景變深 */
+    }
+  
+    /* 輸入框樣式 */
+    #searchUserId {
+      padding: 8px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+  </style>
+  <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+      type="text/css"
+      media="all"
+    />
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"
+    ></script>
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='js/jquery-func.js') }}"
+    ></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div id="shell">
+    <!-- Header -->
+    <div id="header">
+      <h1 id="logo"><a href="{{ url_for('main.home') }}">MovieBooker</a></h1>
+      <div id="navigation">
+        <ul>
+          <li>
+            <a class="active" href="{{ url_for('main.home') }}">HOME</a>
+          </li>
+          <li><a href="{{ url_for('main.cinemas') }}">Cinemas</a></li>
+          <li><a href="#">Booking</a></li>
+          {% if current_user.is_authenticated %}
+          <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
+          <li><a href="{{ url_for('main.profile') }}">Profile</a></li>
+          <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+          {% else %}
+          <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div id="sub-navigation">
+        <div id="search">
+          <form
+            action="{{ url_for('main.search') }}"
+            method="get"
+            accept-charset="utf-8"
+          >
+            <label for="search-field">SEARCH</label>
+            <input
+              type="text"
+              name="query"
+              value="Enter search here"
+              id="search-field"
+              class="blink search-field"
+            />
+            <input type="submit" value="GO!" class="search-button" />
+          </form>
+        </div>
+      </div>
+    </div>
+
+  <div class="container">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+      <!-- 用戶頭像和基本信息 -->
+      <img src="https://via.placeholder.com/80" alt="Profile" class="profile-pic">
+      <div class="profile-info">
+        <h2>{{ user.username }}</h2>
+        <p>{{ user.email }}</p>
+        <p>UID:{{ user.id}}</p>
+      </div>
+      <!-- 菜單 -->
+      <div class="menu">
+        <div class="favorite-movie-btn">
+          <button onclick="window.location.href='{{ url_for('main.user_friends') }}'">
+            我的朋友
+          </button>
+        </div>
+        <div class="favorite-movie-btn">
+          <button onclick="window.location.href='{{ url_for('main.my_reviews') }}'">
+            我的評論
+          </button>
+        </div>
+        <div class="favorite-movie-btn">
+          <button onclick="window.location.href='{{ url_for('main.my_list') }}'">
+            收藏電影
+          </button>
+        </div>
+        <div class="favorite-movie-btn">
+          <button onclick="window.location.href='{{ url_for('main.profile_edit') }}'">
+            編輯資料
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Main Content -->
+    <div class="main-content">
+      <article class="post">
+        <h3>董座豪宅必備私人電影院</h3>
+        <p>私人電影院設施不僅能提升董座家庭的娛樂品味，也讓家人能在繁忙的工作與生活中找到放鬆與享受的空間。從設計到選擇設備，每個環節都必須精心規劃，以確保家庭成員在居家影院中獲得最極致的娛樂體驗。</p>
+        <img src="{{ url_for('static', filename='images/article1.png') }}" alt="文章圖片 1">
+      </article>
+  
+      <article class="post">
+        <h3>「映台北」影展</h3>
+        <p>「映台北」影展，透過六部與台北相關的經典電影，佈置限定版復古場景，讓你穿越時光回到過去的年代，還可以在館內尋寶就有機會拿到限量「映台北帆布提袋」。</p>
+        <img src="{{ url_for('static', filename='images/article2.png') }}" alt="文章圖片 2">
+      </article>
+    </div>
+  
+    <!-- Right Sidebar -->
+    <div class="right-sidebar">
+      <div class="friend-requests-section">
+        <h3 style="font-weight: bold; font-size: 18px;">收到的好友邀请</h3>
+        <ul id="friend-requests">
+        <!-- 动态加载好友邀请 -->
+        </ul>
+      </div>
+      <!-- 已预约座位 -->
+      <div class="booked-seats-section">
+        <h3 style="font-weight: bold; font-size: 18px;">已预定座位</h3>
+        <ul id="booked-seats">
+        <!-- 动态加载已预约座位 -->
+        </ul>
+      </div>
+
+      <!-- 搜尋用戶 -->
+      <div class="search-user">
+        <label for="searchUserId" class="search-label">發送好友邀請</label>
+        <input type="text" id="searchUserId" placeholder="輸入 User ID">
+        <button onclick="sendFriendRequest()" class="search-btn">發送好友邀請</button>
+      </div>
+      
+      <div id="toast" class="toast"></div>
+      
+      <script>
+        // 顯示 Toast 提示
+        function showToast(message) {
+          const toast = document.getElementById('toast');
+          toast.textContent = message; // 設定顯示的訊息
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 4000); // 4 秒後自動隱藏
+        }
+      
+        // 發送好友邀請
+        function sendFriendRequest() {
+          const uid = document.getElementById('searchUserId').value;  // 獲取用戶輸入的 UID
+        
+          fetch('/send-friend-request', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'  // 設置請求頭部為 JSON 格式
+            },
+            body: JSON.stringify({ uid: uid })  // 將 UID 包裝為 JSON 格式
+          })
+          .then(response => response.json())  // 解析回應的 JSON 數據
+          .then(data => {
+            if (data.message) {
+              showToast(data.message);  // 顯示成功的提示信息
+            } else if (data.error) {
+              showToast(data.error);  // 顯示錯誤的提示信息
+            }
+          })
+          .catch(error => {
+            console.error('發送好友邀請失敗:', error);
+            showToast('發送好友邀請時出現錯誤');
+          });
+        }
+  
+        function loadFriendRequests() {
+          fetch('/get-friend-requests',{
+            method: 'GET',
+            credentials: 'include', 
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('請求失敗，狀態碼：' + response.status);
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log(data);
+              const requestList = document.getElementById('friend-requests');
+              requestList.innerHTML = ''; // 清空现有内容
+              if (data.requests && data.requests.length > 0) {
+                data.requests.forEach(request => {
+                  const li = document.createElement('li');
+                  li.innerHTML = `
+                    <span>${request.sender_username} 想成為你的好友</span>
+                    <button onclick="respondFriendRequest(${request.id}, 'accept')">接受</button>
+                    <button onclick="respondFriendRequest(${request.id}, 'reject')">拒绝</button>
+                ` ;
+                  requestList.appendChild(li);
+                });
+                } else {
+                  requestList.innerHTML = '<li>暫無好友邀請</li>';
+                }
+              })
+              .catch(error => {
+                console.error('加載好友邀請失敗:', error);
+              });
+        }
+        // 加载已预约座位
+        function loadBookedSeats() {
+          fetch('/get-booked-seats', {
+            method: 'GET',
+            credentials: 'include'
+          })
+          .then(response => response.json())
+          .then(data => {
+            const bookedSeatsList = document.getElementById('booked-seats');
+            bookedSeatsList.innerHTML = '';
+            if (data.bookings && data.bookings.length > 0) {
+              data.bookings.forEach(booking => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                  <div><strong>電影名：</strong>${booking.movie_title}</div>
+                  <div><strong>座位：</strong>${booking.seat_number}</div>
+                  <div><strong>時間：</strong>${new Date(booking.screening_time).toLocaleDateString()} ${new Date(booking.screening_time).toLocaleTimeString()}</div>
+                  <button onclick="cancelBooking(${booking.id})">取消</button>
+                `;
+                bookedSeatsList.appendChild(li);
+              });
+            } else {
+              bookedSeatsList.innerHTML = '<li>暫無已预定座位</li>';
+            }
+          })
+          .catch(error => {
+            console.error('加載已預定座位失敗:', error);
+          });
+        }
+
+        // 取消座位預定
+        function cancelBooking(bookingId) {
+          fetch(`/cancel-booking/${bookingId}`, {
+            method: 'POST',
+            credentials: 'include' // 確保發送用戶的 session 信息
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('取消成功');
+              loadBookedSeats(); // 重新加載已預定座位
+            } else {
+              alert('取消失敗: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('取消座位預定失敗:', error);
+          });
+        }
+        // 响应好友邀请
+        function respondFriendRequest(requestId, action) {
+          fetch('/respond-friend-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: requestId, action: action })
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message || data.error);
+            loadFriendRequests(); // 更新好友邀请列表
+          })
+          .catch(error => {
+            console.error('處理好友邀請失敗:', error);
+          });
+        }
+      
+        // 页面加载时自动加载好友邀请
+        document.addEventListener('DOMContentLoaded', () => {
+          loadFriendRequests();
+          loadBookedSeats();
+        });
+      </script>

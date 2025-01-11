@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的好友</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            font-size: 3em;
+            color: #FFA500; /* Orange color */
+            margin-top: 30px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+        li {
+            background-color: #333;
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        li:hover {
+            background-color: #444;
+        }
+        .friend {
+            margin-bottom: 30px;
+        }
+        .friend-name {
+            font-size: 1.5em;
+            color: #FFA500;
+        }
+        .movie {
+            display: inline-block;
+            width: 150px;
+            margin: 10px;
+            text-align: center;
+        }
+        .movie img {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .movie-title {
+            font-size: 1.1em;
+            color: #fff;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            li {
+                font-size: 1.1em;
+                padding: 12px;
+            }
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        a.back-to-profile {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        a.back-to-profile:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to profile link -->
+    <a href="{{ url_for('main.profile') }}" class="back-to-profile">返回个人资料</a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="flash {{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    <h1>我的好友</h1>
+    <ul>
+        {% for friend in friends %}
+            <li class="friend">
+                <div class="friend-name">{{ friend.username }}</div>
+                <form action="{{ url_for('main.remove_friend', friend_id=friend.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">删除好友</button>
+                </form>
+
+                {% if favorites[friend.id] %}
+                    <div class="friend-movies">
+                        {% for movie in favorites[friend.id] %}
+                            <div class="movie">
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                                <div class="movie-title">{{ movie.title }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>{{ friend.username }} 尚未收藏任何电影。</p>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

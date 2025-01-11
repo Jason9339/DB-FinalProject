@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個人資料</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111; /* Black background */
+      margin: 0;
+      padding: 0;
+      color: #fff; /* White text color for contrast */
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #222; /* Darker background for the container */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #FFA500; /* Orange title for contrast */
+      text-align: center;
+    }
+
+    .info-form {
+      margin-top: 20px;
+    }
+
+    .info-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #ccc; /* Light gray label for readability */
+    }
+
+    .info-form input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #444;
+      border-radius: 5px;
+      font-size: 1em;
+      background-color: #333; /* Dark background for input fields */
+      color: #fff; /* White text for inputs */
+    }
+
+    .info-form input[type="text"]:focus {
+      border-color: #FFA500; /* Orange focus border */
+      outline: none;
+    }
+
+    .info-form button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
+
+    .info-form button:hover {
+      background-color: #0056b3;
+    }
+
+    .info-form button:active {
+      background-color: #004080;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>個人資料</h1>
+    
+    <!-- 用戶名和電子郵件表單 -->
+    <form class="info-form" action="{{ url_for('main.profile_edit') }}" method="POST">
+      <label for="username">用戶名:</label>
+      <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+      
+      <label for="email">電子郵件:</label>
+      <input type="text" id="email" name="email" value="{{ current_user.email }}" required>
+      
+      <label for="old_password">舊密碼:</label>
+      <input type="password" id="old_password" name="old_password" required>
+
+      <label for="new_password">新密碼:</label>
+      <input type="password" id="new_password" name="new_password" required>
+
+      <button type="submit">提交</button>
+    </form>
+  </div>
+</body>
+</html>

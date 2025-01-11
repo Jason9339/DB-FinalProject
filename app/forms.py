@@ -41,3 +41,7 @@ class BookingForm(FlaskForm):
     screening_time = StringField("Screening Time", validators=[DataRequired()])
     seat_number = StringField("Seat Number", validators=[DataRequired()])
     submit = SubmitField("Book Seat")
+
+class AddFriendForm(FlaskForm):
+    friend_email = StringField("Friend's Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Add Friend")

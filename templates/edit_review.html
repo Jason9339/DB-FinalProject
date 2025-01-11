@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Review</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            font-size: 3em;
+            color: #FFA500;
+            margin-top: 30px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+        }
+        form {
+            width: 50%;
+            margin: 0 auto;
+            background-color: #333;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #222;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a.back-to-reviews {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        a.back-to-reviews:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Back to reviews link -->
+    <a href="{{ url_for('main.my_reviews') }}" class="back-to-reviews">Back to My Reviews</a>
+
+    <h1>Edit Review</h1>
+
+    <!-- Edit review form -->
+    <form action="{{ url_for('main.edit_review', review_id=review.id) }}" method="POST">
+        <label for="rating">Rating (1-5):</label>
+        <input type="text" id="rating" name="rating" value="{{ review.rate }}" required>
+
+        <label for="content">Your Review:</label>
+        <textarea id="content" name="content" rows="4" required>{{ review.content }}</textarea>
+
+        <button type="submit">Update Review</button>
+    </form>
+
+</body>
+</html>
