@@ -4,5 +4,8 @@
 - [ ] github 上傳各組 PDF 檔的系統架構，包括系統功能、 系統開發的程式語言、DBMS 與工具、系統模組
 
 
-## 🔗[ER-model](https://www.canva.com/design/DAGXeahzacY/pp-r1npRtoxc6OyETlqeyw/edit)
+#### [ER Model](DBMS_ER_Model.pdf)
+#### [Relational Schema](DBMS_schema.pdf)
+
+#### [專題題目說明](https://docs.google.com/document/d/1qoAU9gMx5AhGUXotZhM36or8CdsMPAHw8nJPB1ATvQ8/edit?tab=t.0)
 
