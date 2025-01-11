@@ -3,8 +3,10 @@
 <div class="login-container">
   <h1>用戶登錄</h1>
 
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
+  {% with messages = get_flashed_messages(with_categories=true) %} 
+  {% if messages %} 
+  {% for category, message in messages %}
+  {% if category in ["login_danger"] %}
   <div class="alert alert-{{ category }}">{{ message }}</div>
   {% endfor %} {% endif %} {% endwith %}
 

@@ -10,6 +10,7 @@ DB-FinalProject/
 │   ├── models.py       # 資料庫模型
 │   ├── routes.py       # 路由邏輯
 │   └── forms.py        # 表單處理
+│   └── seed.py         # 初始化資料
 │
 ├── static/
 │   ├── css/
@@ -40,18 +41,21 @@ DB-FinalProject/
 ## 專案設置步驟
 
 1. clone repository
+
    ```bash
    git clone https://github.com/your-username/DB-FinalProject.git
    cd DB-FinalProject
    ```
 
 2. 創建虛擬環境
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # 在 Windows 上使用 `venv\Scripts\activate`
    ```
 
 3. 安裝依賴
+
    ```bash
    pip install -r requirements.txt
    ```

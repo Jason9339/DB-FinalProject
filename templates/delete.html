@@ -1,0 +1,106 @@
+{% extends "base.html" %} {% block content %} 
+<div class="delete-page">
+    <div class="box">
+        <div class="head">
+          <h2>Delete Dashboard</h2>
+        </div>
+        <div class="cl">&nbsp;</div>
+    </div>
+
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+            {{ message }}
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+    <div class="container">
+        <h1>Delete a Movie</h1>
+        <form method="GET" id="cinema-form">
+            <label for="cinema">Select Cinema:</label>
+            <select name="cinema" id="cinema" onchange="this.form.submit()">
+                <option value="">Select a Cinema</option>
+                {% for cinema in cinemas %}
+                <option value="{{ cinema.name }}" {% if selected_cinema == cinema.name %}selected{% endif %}>
+                    {{ cinema.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+        
+        <form method="POST">
+            <label for="movie">Select Movie:</label>
+            <select name="movie" id="movie">
+                {% if movies %}
+                {% for movie in movies %}
+                <option value="{{ movie.id }}">{{ movie.title }}</option>
+                {% endfor %}
+                {% else %}
+                <option value="">No movies available</option>
+                {% endif %}
+            </select>
+        
+            <input type="hidden" name="cinema" value="{{ selected_cinema }}">
+            <button type="submit">Delete Movie</button>
+        </form>
+        
+        
+        
+        
+    </div>
+
+    <style>
+        
+        .delete-page .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-page h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .delete-page label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .delete-page input, .delete-page textarea, .delete-page select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .delete-page button {
+            width: 100%;
+            padding: 10px;
+            background-color: #FF4136; /* Red color for delete action */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .delete-page button:hover {
+            background-color: #B22222;
+        }
+    </style>
+</body>
+</html>
+{% endblock %}

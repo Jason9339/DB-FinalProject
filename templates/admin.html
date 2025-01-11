@@ -1,0 +1,69 @@
+{% extends "base.html" %} {% block content %} 
+
+
+<!-- Admin Actions Box -->
+<div class="box">
+  <div class="head">
+    <h2>Admin Actions</h2>
+  </div>
+  <div class="admin-actions">
+    <button onclick="window.location.href='/insert'">Add Movie</button>
+    <button onclick="window.location.href='/add_cinema'">Add Cinema</button>
+    <button onclick="window.location.href='/add_screeningtime'">Add Screeningtime</button>
+    <button onclick="window.location.href='/delete'">Delete Movie</button>
+    <button onclick="window.location.href='/delete_cinema'">Delete Cinema</button>
+    <button onclick="window.location.href='/update'">Update Movie</button>
+  </div>
+  <div class="cl">&nbsp;</div>
+</div>
+
+
+
+{% for cinema_name, movies in cinema_movies.items() %}
+<div class="box">
+  <div class="head">
+    <h2>{{ cinema_name }}</h2>
+    <p class="text-right"><a href="#">See all</a></p>
+  </div>
+  {% if movies %} {% for movie in movies[:10] %}
+  <div class="movie {% if loop.last %}last{% endif %}">
+    <div class="movie-image">
+      <a href="{{ url_for('main.movie_detail', movie_id=movie.id) }}">
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" />
+      </a>
+    </div>
+    <div class="rating">
+      <p>RATING</p>
+      <div class="stars">
+        <div class="stars-in"></div>
+      </div>
+      <span class="comments">{{ movie.comments_count }}</span>
+    </div>
+  </div>
+  {% endfor %} {% else %}
+  <p>No movies available at the moment. Please check back later!</p>
+  {% endif %}
+  <div class="cl">&nbsp;</div>
+</div>
+{% endfor %}
+
+<style>
+  .admin-actions {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .admin-actions button {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .admin-actions button:hover {
+    background-color: #0056b3;
+  }
+</style>
+
+{% endblock %}
