@@ -173,10 +173,11 @@ def seed_reviews(users, movies):
         # 每部電影隨機生成2-5條評論
         num_reviews = random.randint(2, 5)
         for _ in range(num_reviews):
+            rid = random.choice(users).id
             review = Review(
-                user_id=random.choice(users).id,
+                user_id=rid,
                 movie_id=movie.id,
-                content=f"這是一條關於《{movie.title}》的影評。",
+                content=f"這是一條關於《{movie.title}》的影評。From {rid}",
                 rate=random.choice(possible_ratings)  # 隨機選擇一個固定評分
             )
             reviews.append(review)
