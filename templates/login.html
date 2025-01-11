@@ -7,8 +7,11 @@
   {% if messages %} 
   {% for category, message in messages %}
   {% if category in ["login_danger"] %}
-  <div class="alert alert-{{ category }}">{{ message }}</div>
-  {% endfor %} {% endif %} {% endwith %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endif %}
+  {% endfor %} 
+  {% endif %}
+  {% endwith %}
 
   <form method="POST" action="{{ url_for('auth.login') }}">
     {{ form.hidden_tag() }}
