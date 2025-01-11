@@ -42,7 +42,7 @@ class Movie(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     genre = db.Column(db.String(100))
-    screening_times = db.relationship("ScreeningTime", backref="movie", lazy=True)
+    screening_times = db.relationship("ScreeningTime", backref="movie",cascade="all, delete-orphan", lazy=True)
     release_date = db.Column(db.String(50), nullable=True)
     poster_url = db.Column(db.String(300), nullable=True)
     reviews = db.relationship("Review", backref="movie", lazy=True)
@@ -56,7 +56,7 @@ class Cinema(db.Model):
     name = db.Column(db.String(200), nullable=False)
     location = db.Column(db.String(300))
     halls = db.relationship("Hall", backref="cinema", lazy=True)
-    screening_times = db.relationship("ScreeningTime", backref="cinema", lazy=True)
+    screening_times = db.relationship("ScreeningTime", backref="cinema",cascade="all, delete-orphan", lazy=True)
 
 
 class Hall(db.Model):
@@ -137,6 +137,14 @@ user_favorites = db.Table(
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
     db.Column("movie_id", db.Integer, db.ForeignKey("movie.id"), primary_key=True),
 )
+class CinemaMovie(db.Model):
+    __tablename__ = 'cinema_movies'
+    id = db.Column(db.Integer, primary_key=True)
+    cinema_id = db.Column(db.Integer, db.ForeignKey('cinema.id'), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'), nullable=False)
+
+    cinema = db.relationship('Cinema', backref='cinema_movies')
+    movie = db.relationship('Movie', backref='cinema_movies')
 
 
 @login_manager.user_loader

@@ -3,6 +3,7 @@ from app import db
 from app.models import User, Movie, Cinema, Hall, ScreeningTime, Review
 import random
 
+# 資料庫初始化
 def seed_movies():
     movies = [
         Movie(
