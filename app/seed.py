@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from app import db
 from app.models import User, Movie, Cinema, Hall, ScreeningTime, Review
 import random
+from werkzeug.security import generate_password_hash
 
 # 資料庫初始化
 def seed_movies():
@@ -148,19 +149,17 @@ def create_fixed_screening_times(movies, cinemas):
 
 
 def create_admin():
-    admin = User(username="admin", email="admin@example.com")
+    admin = User(id="000",username="admin", email="admin@example.com")
     admin.set_password("admin123")
     return admin
 
 
 def seed_users():
     users = [
-        User(username="user1", email="user1@example.com"),
-        User(username="user2", email="user2@example.com"),
-        User(username="user3", email="user3@example.com"),
+        User(username="user1", email="user1@example.com", password_hash=generate_password_hash("password1")),
+        User(username="user2", email="user2@example.com", password_hash=generate_password_hash("password2")),
+        User(username="user3", email="user3@example.com", password_hash=generate_password_hash("password3")),
     ]
-    for user in users:
-        user.set_password("password123")
     return users
 
 
@@ -174,10 +173,11 @@ def seed_reviews(users, movies):
         # 每部電影隨機生成2-5條評論
         num_reviews = random.randint(2, 5)
         for _ in range(num_reviews):
+            rid = random.choice(users).id
             review = Review(
-                user_id=random.choice(users).id,
+                user_id=rid,
                 movie_id=movie.id,
-                content=f"這是一條關於《{movie.title}》的影評。",
+                content=f"這是一條關於《{movie.title}》的影評。From {rid}",
                 rate=random.choice(possible_ratings)  # 隨機選擇一個固定評分
             )
             reviews.append(review)
