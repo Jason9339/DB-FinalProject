@@ -497,21 +497,21 @@ def delete_review(review_id):
 @main.route('/send-friend-request', methods=['POST'])
 @login_required
 def send_friend_request():
-    # 使用 current_user 获取发送者 ID
+    # 使用 current_user 获取發送者 ID
     sender_id = current_user.id
     
     # 从请求中获取接收者的 UID
     data = request.json
     receiver_uid = data.get('uid')
     
-    # 防止用户向自己发送好友请求
+    # 防止用户向自己發送好友请求
     if sender_id == receiver_uid:
-        return jsonify({'error': '不能向自己发送好友邀请'}), 300
+        return jsonify({'error': '不能向自己發送好友邀請'}), 300
     
     # 查找接收者用户
     receiver = User.query.filter_by(id=receiver_uid).first()
     if not receiver:
-        return jsonify({'error': '用户不存在'}), 400
+        return jsonify({'error': '用戶不存在'}), 400
     
     existing_friendship = Friend.query.filter(
         (Friend.user_id == sender_id) & (Friend.friend_id == receiver.id) |
@@ -519,9 +519,9 @@ def send_friend_request():
     ).first()
 
     if existing_friendship:
-        return jsonify({'error': '你們已经是好友'}), 300
+        return jsonify({'error': '你們已經是好友了'}), 300
 
-    # 检查是否已经存在未处理的好友邀请
+    # 检查是否已经存在未处理的好友邀請
     existing_request = FriendRequest.query.filter_by(
         sender_id=sender_id,
         receiver_id=receiver.id,
@@ -529,9 +529,9 @@ def send_friend_request():
     ).first()
     
     if existing_request:
-        return jsonify({'error': '好友邀请已发送'}), 300
+        return jsonify({'error': '好友邀請已發送'}), 300
     
-    # 创建新的好友邀请
+    # 创建新的好友邀請
     new_request = FriendRequest(
         sender_id=sender_id,
         receiver_id=receiver.id,
@@ -540,7 +540,7 @@ def send_friend_request():
     db.session.add(new_request)
     db.session.commit()
     
-    return jsonify({'message': '好友邀请已发送'}), 200
+    return jsonify({'message': '好友邀請已發送'}), 200
 
 @main.route('/get-friend-requests', methods=['GET'])
 @login_required
@@ -548,7 +548,7 @@ def get_friend_requests():
     # 使用 current_user 获取当前登录用户的 ID
     current_user_id = current_user.id
     
-    # 查询当前用户收到的好友邀请，状态为 pending
+    # 查询当前用户收到的好友邀請，状态为 pending
     friend_requests = FriendRequest.query.filter_by(
         receiver_id=current_user_id,
         status='pending'
@@ -559,7 +559,7 @@ def get_friend_requests():
         {
             'id': request.id,
             'sender_id': request.sender_id,
-            'sender_username': User.query.get(request.sender_id).username  # 获取发送者的用户名
+            'sender_username': User.query.get(request.sender_id).username  # 获取發送者的用户名
         }
         for request in friend_requests
     ]
@@ -572,7 +572,7 @@ def respond_friend_request():
     request_id = data.get('request_id')
     action = data.get('action')  # 'accept' 或 'reject'
 
-    # 验证好友邀请是否存在
+    # 验证好友邀請是否存在
     friend_request = FriendRequest.query.get(request_id)
     if not friend_request:
         return jsonify({'error': '好友邀請不存在'}), 404
@@ -584,7 +584,7 @@ def respond_friend_request():
 
     # 根据 action 执行相应操作
     if action == 'accept':
-        # 更新好友邀请状态
+        # 更新好友邀請状态
         friend_request.status = 'accepted'
 
         # 添加到好友列表
@@ -598,7 +598,7 @@ def respond_friend_request():
         # 使用 flash 显示提示信息
         flash(f"你已與 {friend_request.sender.username} 成為好友！", "success")
     elif action == 'reject':
-        # 更新好友邀请状态
+        # 更新好友邀請状态
         friend_request.status = 'rejected'
     else:
         return jsonify({'error': '無效的操作'}), 400
@@ -950,11 +950,11 @@ def add_cinema():
         # Get data from the form
         cinema_name = request.form.get('name')
         location = request.form.get('location')
-        halls_data = request.form.getlist('hall') 
+        halls_data = request.form.getlist('hall[]')  # Note the [] in the name
 
         # Validate input
-        if not cinema_name or not location:
-            flash("Cinema name and location are required.", "danger")
+        if not cinema_name or not location or not halls_data:
+            flash("Cinema name, location and at least one hall are required.", "danger")
             return redirect(url_for('main.add_cinema'))
 
         # Check if the cinema already exists
@@ -963,22 +963,44 @@ def add_cinema():
             flash("A cinema with this name already exists.", "danger")
             return redirect(url_for('main.add_cinema'))
 
-        # Create a new cinema
-        new_cinema = Cinema(name=cinema_name, location=location)
+        try:
+            # Create a new cinema
+            new_cinema = Cinema(name=cinema_name, location=location)
+            
+            # Add halls to the cinema
+            for hall_data in halls_data:
+                if not hall_data.strip():  # Skip empty entries
+                    continue
+                    
+                try:
+                    hall_name, hall_size = hall_data.split(',')
+                    new_cinema.halls.append(
+                        Hall(
+                            name=hall_name.strip(),
+                            size=int(hall_size.strip())
+                        )
+                    )
+                except ValueError:
+                    flash("Invalid hall format. Please use 'hall_name,seat_number' format.", "danger")
+                    return redirect(url_for('main.add_cinema'))
+                except Exception as e:
+                    flash(f"Error processing hall data: {str(e)}", "danger")
+                    return redirect(url_for('main.add_cinema'))
 
-        # Add halls to the cinema
-        for hall_data in halls_data:
-            hall_name, hall_size = hall_data.split(',')  
-            new_cinema.halls.append(Hall(name=hall_name.strip(), size=int(hall_size.strip())))
+            # Add the new cinema to the database
+            db.session.add(new_cinema)
+            db.session.commit()
 
-        # Add the new cinema to the database
-        db.session.add(new_cinema)
-        db.session.commit()
-
-        flash(f"Cinema '{cinema_name}' has been added successfully.", "success")
-        return redirect(url_for('main.admin_dashboard'))
+            flash(f"Cinema '{cinema_name}' has been added successfully.", "success")
+            return redirect(url_for('main.admin_dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding cinema: {str(e)}", "danger")
+            return redirect(url_for('main.add_cinema'))
 
     return render_template('add_cinema.html')
+
 
 @main.route('/delete_cinema', methods=['GET', 'POST'])
 def delete_cinema():
@@ -1012,17 +1034,10 @@ def add_screeningtime():
 
     # Get selected cinema from the query parameters
     selected_cinema_name = request.args.get('cinema')
-    selected_cinema = None
-    movies = []
-
-    # If a cinema is selected, fetch its movies
-    if selected_cinema_name:
-        selected_cinema = Cinema.query.filter_by(name=selected_cinema_name).first()
-        if selected_cinema:
-            # Fetch movies currently being screened in the selected cinema
-            screenings = ScreeningTime.query.filter_by(cinema_id=selected_cinema.id).all()
-            movies = {screening.movie for screening in screenings}  # Unique movies
-            movies = list(movies)  # Convert to a list for rendering
+    selected_cinema = Cinema.query.filter_by(name=selected_cinema_name).first()
+    
+    movies = Movie.query.all()
+    movies = list(movies)
 
     if request.method == 'POST':
         # Handle form submission

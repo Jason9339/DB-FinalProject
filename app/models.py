@@ -89,7 +89,7 @@ class Cinema(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     location = db.Column(db.String(300))
-    halls = db.relationship("Hall", backref="cinema", lazy=True)
+    halls = db.relationship("Hall", backref="cinema",cascade="all, delete-orphan",lazy=True)
     screening_times = db.relationship("ScreeningTime", backref="cinema",cascade="all, delete-orphan", lazy=True)
 
 
