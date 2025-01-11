@@ -598,7 +598,7 @@ def add_cinema():
         # Get data from the form
         cinema_name = request.form.get('name')
         location = request.form.get('location')
-        halls_data = request.form.getlist('halls') 
+        halls_data = request.form.getlist('hall') 
 
         # Validate input
         if not cinema_name or not location:
