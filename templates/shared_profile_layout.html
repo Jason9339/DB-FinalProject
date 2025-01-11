@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+  .profile-container {
+    display: flex;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .profile-sidebar {
+    flex: 0 0 280px;
+    background: #1e1e1e;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    height: fit-content;
+  }
+
+  .profile-main {
+    flex: 1;
+    background: #1e1e1e;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    display: block;
+    border: 3px solid #FFA500;
+  }
+
+  .profile-info {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .profile-info h2 {
+    color: #FFA500;
+    margin: 0.5rem 0;
+    font-size: 1.5rem;
+  }
+
+  .profile-info p {
+    color: #aaa;
+    margin: 0.25rem 0;
+  }
+
+  .profile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .profile-menu a {
+    padding: 0.75rem 1rem;
+    background: #2d2d2d;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+
+  .profile-menu a:hover {
+    background: #FFA500;
+    transform: translateY(-1px);
+  }
+
+  .profile-menu a.active {
+    background: #FFA500;
+  }
+
+  .page-title {
+    color: #FFA500;
+    margin: 0 0 1.5rem;
+    font-size: 2rem;
+    border-bottom: 2px solid #333;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Common card style for items */
+  .item-card {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: transform 0.2s;
+  }
+
+  .item-card:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 2rem;
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    border-radius: 8px;
+    display: none;
+    z-index: 1000;
+  }
+
+  .toast.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .profile-container {
+      flex-direction: column;
+    }
+
+    .profile-sidebar {
+      flex: none;
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+  <!-- Sidebar -->
+  <div class="profile-sidebar">
+    <div class="profile-info">
+      <h2>{{ current_user.username }}</h2>
+      <p>{{ current_user.email }}</p>
+      <p>UID: {{ current_user.id }}</p>
+    </div>
+    
+    <nav class="profile-menu">
+      <a href="{{ url_for('main.user_friends') }}" class="{{ 'active' if request.endpoint == 'main.user_friends' }}">我的朋友</a>
+      <a href="{{ url_for('main.my_reviews') }}" class="{{ 'active' if request.endpoint == 'main.my_reviews' }}">我的評論</a>
+      <!-- <a href="{{ url_for('main.my_list') }}" class="{{ 'active' if request.endpoint == 'main.my_list' }}">收藏電影</a> -->
+      <a href="{{ url_for('main.profile_edit') }}" class="{{ 'active' if request.endpoint == 'main.profile_edit' }}">編輯資料</a>
+    </nav>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="profile-main">
+    {% block profile_content %}{% endblock %}
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+{% endblock %}

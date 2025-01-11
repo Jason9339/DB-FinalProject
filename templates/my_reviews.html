@@ -1,127 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Reviews</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #111;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            text-align: center;
-            font-size: 3em;
-            color: #FFA500;
-            margin-top: 30px;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 20px auto;
-            width: 80%;
-            max-width: 800px;
-        }
-        li {
-            background-color: #333;
-            margin: 10px 0;
-            padding: 20px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-        }
-        li:hover {
-            background-color: #444;
-        }
-        h3 {
-            font-size: 1.8em;
-            color: #ADD8E6; /* Light blue for movie title */
-            margin-bottom: 10px;
-        }
-        p {
-            font-size: 1.2em;
-            margin: 5px 0;
-        }
-        strong {
-            color: #fff; /* White color for rating text */
-        }
-        p.no-reviews {
-            text-align: center;
-            font-size: 1.5em;
-            color: #999;
-        }
-        a.back-to-profile {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: #555;
-            color: white;
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
-        }
-        a.back-to-profile:hover {
-            background-color: #666;
-        }
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5em;
-            }
-            li {
-                font-size: 1.1em;
-                padding: 15px;
-            }
-            a.back-to-profile {
-                font-size: 0.9em;
-                padding: 8px 12px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Back to profile link -->
-    <a href="{{ url_for('main.profile') }}" class="back-to-profile">Back to Profile</a>
+{% extends "shared_profile_layout.html" %}
+{% block profile_content %}
+<h1 class="page-title">我的評論</h1>
 
-    <h1>My Reviews</h1>
+{% if reviews %}
+  {% for review in reviews %}
+  <div class="item-card review-card">
+    <h3>{{ review.movie.title }}</h3>
+    <div class="rating">
+      ★ {{ review.rate }}
+    </div>
+    <p class="review-content">{{ review.content }}</p>
+    <div class="review-actions">
+      <a href="{{ url_for('main.edit_review', review_id=review.id) }}" class="btn-edit">編輯</a>
+      <form action="{{ url_for('main.delete_review', review_id=review.id) }}" method="POST" class="delete-form">
+        <button type="submit" class="btn-danger">刪除</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="no-items">您還沒有發表任何評論</p>
+{% endif %}
 
-    <!-- Display flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul>
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+<style>
+.review-card h3 {
+  color: #FFA500;
+  margin: 0 0 0.5rem;
+}
 
-    {% if reviews %}
-    <ul>
-        {% for review in reviews %}
-            <li>
-                <h3>{{ review.movie.title }}</h3>
-                <p><strong>Rating:</strong> {{ review.rate }}/5</p>
-                <p>{{ review.content }}</p>
+.rating {
+  font-size: 1.2rem;
+  color: #FFD700; /* 星星的金色 */
+  margin-bottom: 1rem;
+}
 
-                <!-- Edit review button -->
-                <a href="{{ url_for('main.edit_review', review_id=review.id) }}" 
-                   style="background-color: #4CAF50; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Edit</a>
+.review-content {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
 
-                <!-- Delete review button -->
-                <form action="{{ url_for('main.delete_review', review_id=review.id) }}" method="POST">
-                    <button type="submit" style="background-color: #f44336; color: white; padding: 10px; border: none; border-radius: 5px;">Delete</button>
-                </form>
-            </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-        <p class="no-reviews">You have not submitted any reviews yet.</p>
-    {% endif %}
+.review-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
 
-</body>
-</html>
+.btn-edit {
+  background: #28a745;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-edit:hover {
+  background: #218838;
+}
+
+.delete-form {
+  display: inline;
+}
+
+.no-items {
+  text-align: center;
+  color: #666;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+}
+</style>
+{% endblock %}

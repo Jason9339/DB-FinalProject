@@ -52,10 +52,7 @@
               <a href="{{ url_for('main.cinemas') }}" 
                  class="{{ 'active' if request.endpoint == 'main.cinemas' }}">Cinemas</a>
             </li>
-            <li>
-              <a href="#" 
-                 class="{{ 'active' if request.endpoint == 'main.booking' }}">Booking</a>
-            </li>
+            
             {% if current_user.is_authenticated %}
 
             <li>

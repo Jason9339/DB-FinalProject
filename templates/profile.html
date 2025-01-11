@@ -4,7 +4,6 @@
   <!-- Left Sidebar -->
   <div class="sidebar">
     <div class="profile-info">
-      <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile Picture" class="profile-pic">
       <h2>{{ user.username }}</h2>
       <p>{{ user.email }}</p>
       <p>UID: {{ user.id }}</p>
@@ -18,9 +17,9 @@
       <button onclick="location.href='{{ url_for('main.my_reviews') }}'">
         <i class="fas fa-comments"></i> 我的評論
       </button>
-      <button onclick="location.href='{{ url_for('main.my_list') }}'">
+      <!-- <button onclick="location.href='{{ url_for('main.my_list') }}'">
         <i class="fas fa-film"></i> 收藏電影
-      </button>
+      </button> -->
       <button onclick="location.href='{{ url_for('main.profile_edit') }}'">
         <i class="fas fa-user-edit"></i> 編輯資料
       </button>
