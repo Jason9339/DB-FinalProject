@@ -9,6 +9,7 @@ from flask import (
     session,
     jsonify,
 )
+from flask import current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from flask import request, redirect, url_for
@@ -252,7 +253,7 @@ def login():
             next_page = request.args.get("next")
             return redirect(next_page) if next_page else redirect(url_for("main.home"))
         else:
-            flash("Login unsuccessful. Please check email and password", "danger")
+            flash("Login unsuccessful. Please check email and password", "login_danger")
     return render_template("login.html", form=form)
 
 
@@ -400,13 +401,15 @@ def insert_create_fixed_screening_times(movies, cinemas):
                         )
                     )
     return screenings
-from flask import Flask
-app = Flask(__name__)
 
-UPLOAD_FOLDER = 'static/images'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
-UPLOAD_FOLDER = 'static/images'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Add these at the top of your routes.py file
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @main.route('/insert', methods=['GET', 'POST'])
 def insert_movie():  
     cinemas = Cinema.query.all()
@@ -421,68 +424,102 @@ def insert_movie():
         cinema_movies[cinema.name] = list(movies)
 
     if request.method == 'POST':
+
+        print("Form submitted")  # Debug print
+        print(request.form)      # Debug print
+        print(request.files)     # Debug print
+
         title = request.form.get('title')
         description = request.form.get('description')
         genre = request.form.get('genre')
         release_date = request.form.get('release_date')
         selected_cinema = request.form.get('cinema')
 
-        # Handle file upload for poster image
-        file = request.files.get('poster_file')
-        poster_url = ''
-        if file and file.filename:
+        # Handle file upload
+        if 'poster_file' not in request.files:
+            flash('No file part', 'error')
+            return redirect(request.url)
+            
+        file = request.files['poster_file']
+        
+        if file.filename == '':
+            flash('No selected file', 'error')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            # Ensure filename is secure
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Generate unique filename to prevent overwrites
+            unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+            
+            # Ensure upload folder exists
+            os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
+            
             try:
-                file.save(filepath)
-                poster_url = url_for('static', filename=f'images/{filename}', _external=True)
-                flash(f"File successfully saved to {filepath}")
+                # Save the file
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
+                
+                # Generate the URL for the image to access it via static
+                poster_url = url_for('static', filename=f'images/{unique_filename}')
+                
             except Exception as e:
-                flash(f"Failed to save file: {e}")
-                return "File upload failed", 500
+                flash(f'Error saving file: {str(e)}', 'error')
+                return redirect(request.url)
 
-        # Create new movie with is_current defaulting to False
-        new_movie = Movie(
-            title=title,
-            description=description,
-            genre=genre,
-            release_date=release_date,
-            poster_url=poster_url,
-            rating=0,
-            is_current=False  # Default value, will be updated by update_movie_status()
-        )
+        # Create new movie
+        try:
+            new_movie = Movie(
+                title=title,
+                description=description,
+                genre=genre,
+                release_date=release_date,
+                poster_url=poster_url,
+                rating=0,
+                is_current=False
+            )
 
-        db.session.add(new_movie)
-        db.session.commit()
+            db.session.add(new_movie)
+            db.session.commit()
 
-        selected_cinemas = (
-            cinemas if selected_cinema == 'all'
-            else [cinema for cinema in cinemas if cinema.name == selected_cinema]
-        )
+            # Handle cinema and screening times
+            selected_cinemas = (
+                cinemas if selected_cinema == 'all'
+                else [cinema for cinema in cinemas if cinema.name == selected_cinema]
+            )
 
-        screenings = []
-        fixed_times = [
-            datetime.now().replace(hour=10, minute=0, second=0, microsecond=0),
-            datetime.now().replace(hour=14, minute=0, second=0, microsecond=0),
-            datetime.now().replace(hour=18, minute=0, second=0, microsecond=0),
-        ]
-        for cinema in selected_cinemas:
-            for hall in cinema.halls:
-                for time in fixed_times:
-                    screenings.append(
-                        ScreeningTime(
-                            movie_id=new_movie.id,
-                            cinema_id=cinema.id,
-                            hall_id=hall.id,
-                            date=time,
-                            price=300
+            screenings = []
+            fixed_times = [
+                datetime.now().replace(hour=10, minute=0, second=0, microsecond=0),
+                datetime.now().replace(hour=14, minute=0, second=0, microsecond=0),
+                datetime.now().replace(hour=18, minute=0, second=0, microsecond=0),
+            ]
+            
+            for cinema in selected_cinemas:
+                for hall in cinema.halls:
+                    for time in fixed_times:
+                        screenings.append(
+                            ScreeningTime(
+                                movie_id=new_movie.id,
+                                cinema_id=cinema.id,
+                                hall_id=hall.id,
+                                date=time,
+                                price=300
+                            )
                         )
-                    )
 
-        db.session.add_all(screenings)
-        db.session.commit()
-
-        return redirect(url_for('main.admin_dashboard'))
+            db.session.add_all(screenings)
+            db.session.commit()
+            
+            flash('Movie added successfully!', 'success')
+            return redirect(url_for('main.admin_dashboard'))
+            
+        except Exception as e:
+            print(f"Error details: {str(e)}")  # Debug print
+            db.session.rollback()
+            flash(f'Error adding movie: {str(e)}', 'error')
+            return redirect(request.url)
 
     return render_template('insert.html', cinemas=cinemas, cinema_movies=cinema_movies)
 
@@ -509,51 +546,51 @@ def update_movie():
 def delete_movie():
     # Fetch all cinemas
     cinemas = Cinema.query.all()
-
-    # Get selected cinema from query parameters or form data
     selected_cinema = request.args.get('cinema') or request.form.get('cinema')
-
-    # Initialize movies list
     movies = []
+
     if selected_cinema:
         if selected_cinema == 'all':
-            # Fetch all movies when "All" is selected
             movies = Movie.query.all()
         else:
-            # Fetch movies specific to the selected cinema
             cinema = Cinema.query.filter_by(name=selected_cinema).first()
             if cinema:
                 screenings = ScreeningTime.query.filter_by(cinema_id=cinema.id).all()
                 movies = {screening.movie for screening in screenings}
-                movies = list(movies)  # Convert to a list for rendering in the template
+                movies = list(movies)
 
     if request.method == 'POST':
-        # Handle deletion logic
         movie_id = request.form.get('movie')
-        movie_to_delete = Movie.query.get(movie_id)
+        if not selected_cinema:
+            flash("Please select a cinema.", "error")
+            return redirect(url_for('main.delete_movie'))
 
-        if not movie_to_delete:
-            flash("Movie not found", "error")
+        if not movie_id:
+            flash("Please select a movie to delete.", "error")
             return redirect(url_for('main.delete_movie', cinema=selected_cinema))
 
-        # Delete screenings only for the selected cinema
+        movie_to_delete = Movie.query.get(movie_id)
+        if not movie_to_delete:
+            flash("Movie not found.", "error")
+            return redirect(url_for('main.delete_movie', cinema=selected_cinema))
+
         cinema = Cinema.query.filter_by(name=selected_cinema).first()
         if not cinema:
-            flash("Cinema not found", "error")
+            flash("Cinema not found.", "error")
             return redirect(url_for('main.delete_movie', cinema=selected_cinema))
 
         ScreeningTime.query.filter_by(movie_id=movie_to_delete.id, cinema_id=cinema.id).delete()
-
-        # Check if the movie has screenings in other cinemas
         remaining_screenings = ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).count()
+
         if remaining_screenings == 0:
             db.session.delete(movie_to_delete)
+
         db.session.commit()
         flash(f"Movie '{movie_to_delete.title}' has been deleted from '{selected_cinema}'.", "success")
-
         return redirect(url_for('main.admin_dashboard'))
 
     return render_template('delete.html', cinemas=cinemas, movies=movies, selected_cinema=selected_cinema)
+
 
 @main.route('/add_cinema', methods=['GET', 'POST'])
 def add_cinema():
