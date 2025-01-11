@@ -14,7 +14,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 
 from flask import request, redirect, url_for
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking, Hall
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking, Hall, Seat
 from .models import User, FriendRequest, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
@@ -651,16 +651,14 @@ def edit_review(review_id):
 @login_required
 def get_booked_seats():
     current_user_id = current_user.id
-    
-    # 查找当前用户的所有预定
     bookings = Booking.query.filter_by(user_id=current_user_id).all()
 
-    # 构建返回的数据
     data = [
         {
-            'movie_title': Movie.query.get(booking.screening.movie_id).title,  # 获取电影名称
+            'id': booking.id,  # 添加 booking id
+            'movie_title': Movie.query.get(booking.screening.movie_id).title,
             'seat_number': booking.seat_number,
-            'screening_time': booking.screening.date.strftime('%Y-%m-%d %H:%M')  # 格式化时间
+            'screening_time': booking.screening.date.strftime('%Y-%m-%d %H:%M')
         }
         for booking in bookings
     ]
@@ -671,29 +669,66 @@ def get_booked_seats():
 @main.route('/cancel-booking/<int:booking_id>', methods=['POST'])
 @login_required
 def cancel_booking(booking_id):
-    # 查找訂位
-    booking = Booking.query.get(booking_id)
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
-    if not booking:
-        flash('找不到此訂位!', 'danger')
-        return jsonify({'success': False, 'error': '找不到此訂位!'}), 400  # 返回錯誤信息
-
-    # 檢查訂位是否屬於當前用戶
-    if booking.user_id != current_user.id:
-        flash('無權取消此訂位!', 'danger')
-        return jsonify({'success': False, 'error': '無權取消此訂位!'}), 403  # 返回錯誤信息
-
-    # 刪除訂位
     try:
-        db.session.delete(booking)
-        db.session.commit()
-        flash('訂位已取消!', 'success')
-        return jsonify({'success': True}), 200  # 成功取消訂位
+        # 查找訂位
+        booking = Booking.query.get(booking_id)
+        
+        if not booking:
+            if is_ajax:
+                return jsonify({'success': False, 'error': '找不到此訂位'}), 404
+            flash('找不到此訂位!', 'danger')
+            return redirect(url_for('main.profile'))
+
+        # 檢查訂位是否屬於當前用戶
+        if booking.user_id != current_user.id:
+            if is_ajax:
+                return jsonify({'success': False, 'error': '無權取消此訂位'}), 403
+            flash('無權取消此訂位!', 'danger')
+            return redirect(url_for('main.profile'))
+
+        # 刪除訂位
+        try:
+            db.session.delete(booking)
+            db.session.commit()
+            
+            if is_ajax:
+                return jsonify({
+                    'success': True,
+                    'message': '訂位已成功取消'
+                })
+            
+            flash('訂位已取消!', 'success')
+            return redirect(url_for('main.profile'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"取消訂位時發生錯誤: {str(e)}")
+            
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'error': '取消訂位時發生系統錯誤'
+                }), 500
+                
+            flash('取消訂位失敗!', 'danger')
+            return redirect(url_for('main.profile'))
+            
     except Exception as e:
-        db.session.rollback()
-        flash('取消訂位失敗!', 'danger')
-        print(e)
-        return jsonify({'success': False, 'error': '取消訂位失敗!'}), 500  # 返回錯誤信息
+        current_app.logger.error(f"處理取消訂位請求時發生錯誤: {str(e)}")
+        
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'error': '處理請求時發生錯誤'
+            }), 500
+            
+        flash('處理請求時發生錯誤!', 'danger')
+        return redirect(url_for('main.profile'))
+    
+
 from datetime import datetime, timedelta
 
 def insert_create_fixed_screening_times(movies, cinemas):
