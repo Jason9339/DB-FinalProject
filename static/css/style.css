@@ -379,6 +379,35 @@ h1#logo a {
 #footer .rf {
   float: right;
 }
+
+.seat {
+  width: 50px;
+  height: 50px;
+  margin: 5px;
+  text-align: center;
+  line-height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.seat.available {
+  background-color: #28a745; /* 綠色：可用座位 */
+  color: white;
+}
+
+.seat.select {
+  background-color: #ffc107; /* 黃色：選中座位 */
+  color: black;
+}
+
+.seat.booked {
+  background-color: #dc3545; /* 紅色：已預定座位 */
+  color: white;
+  cursor: not-allowed;
+}
+
 .movie-grid {
   display: flex;
   flex-wrap: wrap;
@@ -428,4 +457,14 @@ h1#logo a {
 
 .section-title {
   padding-left: 10px; /* 增加內距以與直線分開 */
+}
+
+.admin-icon {
+  text-align: right;
+   margin: 10px 20px;
+}
+.admin-icon img {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
 }

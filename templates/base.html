@@ -27,16 +27,54 @@
         <div id="navigation">
           <ul>
             <li>
-              <a class="active" href="{{ url_for('main.home') }}">HOME</a>
+              {% if current_user.is_authenticated and current_user.username ==
+              "admin" %}
+              <div class="admin-icon">
+                <a
+                  href="{{ url_for('main.admin_dashboard') }}"
+                  title="Go to Admin Page"
+                >
+                  <img
+                    src="/static/images/admin-icon.png"
+                    alt="Admin Page"
+                    class="icon"
+                  />
+                </a>
+              </div>
+              <a href="{{ url_for('main.admin_dashboard') }}">Admin Page</a>
+              {% endif %}
             </li>
-            <li><a href="{{ url_for('main.cinemas') }}">Cinemas</a></li>
-            <li><a href="#">Booking</a></li>
+            <li>
+              <a href="{{ url_for('main.home') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.home' }}">HOME</a>
+            </li>
+            <li>
+              <a href="{{ url_for('main.cinemas') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.cinemas' }}">Cinemas</a>
+            </li>
+            <li>
+              <a href="#" 
+                 class="{{ 'active' if request.endpoint == 'main.booking' }}">Booking</a>
+            </li>
             {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.my_list') }}">My List</a></li>
-            <li><a href="{{ url_for('main.profile') }}">Profile</a></li>
-            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+
+            <li>
+              <a href="{{ url_for('main.my_list') }}" 
+                 class="{{ 'active' if request.endpoint == 'main.my_list' }}">My List</a>
+            </li>
+            <li>
+              <a href="{{ url_for('main.profile') }}">Profile</a>
+            </li>
+            <li>
+              <a href="{{ url_for('auth.logout') }}" 
+                 class="{{ 'active' if request.endpoint == 'auth.logout' }}">Logout</a>
+            </li>
+
             {% else %}
-            <li><a href="{{ url_for('auth.login') }}">SignIn</a></li>
+            <li>
+              <a href="{{ url_for('auth.login') }}" 
+                 class="{{ 'active' if request.endpoint == 'auth.login' }}">SignIn</a>
+            </li>
             {% endif %}
           </ul>
         </div>
@@ -60,7 +98,7 @@
           </div>
         </div>
       </div>
-
+      
       <!-- Main Content -->
       <div id="main">
         <div id="content">{% block content %}{% endblock %}</div>
