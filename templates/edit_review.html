@@ -77,7 +77,21 @@
     <!-- Edit review form -->
     <form action="{{ url_for('main.edit_review', review_id=review.id) }}" method="POST">
         <label for="rating">Rating (1-5):</label>
-        <input type="text" id="rating" name="rating" value="{{ review.rate }}" required>
+        <!-- <input type="text" id="rating" name="rating" value="{{ review.rate }}" required> -->
+        <select type="text" id="rating" name="rating" value="{{ review.rate }}" required>
+            <option value="">Select a rating</option>
+            <option value="0.5">0.5 - Very Poor</option>
+            <option value="1.0">1.0 - Poor</option>
+            <option value="1.5">1.5 - Below Average</option>
+            <option value="2.0">2.0 - Average</option>
+            <option value="2.5">2.5 - Above Average</option>
+            <option value="3.0">3.0 - Good</option>
+            <option value="3.5">3.5 - Very Good</option>
+            <option value="4.0">4.0 - Excellent</option>
+            <option value="4.5">4.5 - Outstanding</option>
+            <option value="5.0">5.0 - Perfect</option>
+          </select>
+          
 
         <label for="content">Your Review:</label>
         <textarea id="content" name="content" rows="4" required>{{ review.content }}</textarea>
