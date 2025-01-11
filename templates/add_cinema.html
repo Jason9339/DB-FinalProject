@@ -18,12 +18,32 @@
             <label for="location">Location:</label>
             <input type="text" id="location" name="location" placeholder="Enter location" required>
 
-            <label for="poster">Upload Poster:</label>
-            <input type="file" id="poster" name="poster" accept="image/png, image/jpeg" required>
+            <div id="halls-container">
+                <label>Halls and Seat Numbers:</label>
+                <div class="hall-entry">
+                    <input type="text" name="hall[]" placeholder="Enter hall,seat number" required>
+                </div>
+            </div>
+            <button type="button" id="add-hall" class="secondary-button">Add Another Hall</button>
 
             <button type="submit">Add Cinema</button>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('add-hall').addEventListener('click', function() {
+                const container = document.getElementById('halls-container');
+                const newEntry = document.createElement('div');
+                newEntry.className = 'hall-entry';
+                newEntry.innerHTML = `
+                    <input type="text" name="hall[]" placeholder="Enter hall,seat number" required>
+                    <button type="button" class="remove-hall" onclick="this.parentElement.remove()">Remove</button>
+                `;
+                container.appendChild(newEntry);
+            });
+        });
+    </script>
 
     <style>
         .add-cinema-page .container {
@@ -59,7 +79,7 @@
         .add-cinema-page button {
             width: 100%;
             padding: 10px;
-            background-color: #28a745; /* Green color for add action */
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
@@ -68,7 +88,46 @@
         }
 
         .add-cinema-page button:hover {
-            background-color: #218838;
+            background-color: #28a745;
+        }
+
+        .hall-entry {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .secondary-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            width: auto !important;
+        }
+        
+        .remove-hall {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto !important;
+        }
+        
+        .secondary-button:hover {
+            background-color: #5a6268;
+        }
+        
+        .remove-hall:hover {
+            background-color: #c82333;
+        }
+
+        #halls-container input {
+            flex: 1;
         }
     </style>
 </div>

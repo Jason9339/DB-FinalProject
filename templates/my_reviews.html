@@ -1,0 +1,72 @@
+{% extends "shared_profile_layout.html" %}
+{% block profile_content %}
+<h1 class="page-title">我的評論</h1>
+
+{% if reviews %}
+  {% for review in reviews %}
+  <div class="item-card review-card">
+    <h3>{{ review.movie.title }}</h3>
+    <div class="rating">
+      ★ {{ review.rate }}
+    </div>
+    <p class="review-content">{{ review.content }}</p>
+    <div class="review-actions">
+      <a href="{{ url_for('main.edit_review', review_id=review.id) }}" class="btn-edit">編輯</a>
+      <form action="{{ url_for('main.delete_review', review_id=review.id) }}" method="POST" class="delete-form">
+        <button type="submit" class="btn-danger">刪除</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="no-items">您還沒有發表任何評論</p>
+{% endif %}
+
+<style>
+.review-card h3 {
+  color: #FFA500;
+  margin: 0 0 0.5rem;
+}
+
+.rating {
+  font-size: 1.2rem;
+  color: #FFD700; /* 星星的金色 */
+  margin-bottom: 1rem;
+}
+
+.review-content {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.review-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-edit {
+  background: #28a745;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-edit:hover {
+  background: #218838;
+}
+
+.delete-form {
+  display: inline;
+}
+
+.no-items {
+  text-align: center;
+  color: #666;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+}
+</style>
+{% endblock %}

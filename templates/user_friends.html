@@ -1,0 +1,82 @@
+{% extends "shared_profile_layout.html" %}
+{% block profile_content %}
+<h1 class="page-title">我的好友</h1>
+
+<div class="friends-list">
+  {% for friend in friends %}
+  <div class="item-card friend-card">
+    <div class="friend-info">
+      <h3>{{ friend.username }}</h3>
+      
+      <div class="friend-movies">
+        {% if favorites[friend.id] %}
+          <h4>收藏的電影:</h4>
+          <div class="movie-grid">
+            {% for movie in favorites[friend.id] %}
+            <div class="movie-item">
+              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+              <p>{{ movie.title }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p>尚未收藏任何電影</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <form action="{{ url_for('main.remove_friend', friend_id=friend.id) }}" method="post" class="friend-actions">
+      <button type="submit" class="btn-danger">删除好友</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+.friend-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.friend-info {
+  flex: 1;
+}
+
+.friend-info h3 {
+  color: #FFA500;
+  margin: 0 0 1rem;
+}
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.movie-item {
+  text-align: center;
+}
+
+.movie-item img {
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+</style>
+{% endblock %}

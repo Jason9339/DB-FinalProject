@@ -9,7 +9,7 @@
 
 
 <body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    <!-- {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         <div class="flash-messages">
         {% for category, message in messages %}
@@ -19,7 +19,7 @@
         {% endfor %}
         </div>
     {% endif %}
-    {% endwith %}
+    {% endwith %} -->
 
     <div class="container">
         <h1>Insert a New Movie</h1>
@@ -28,13 +28,13 @@
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" placeholder="Enter movie title" required>
             <!-- Cinema -->
-            <label for="cinema">Cinema:</label>
+            <!-- <label for="cinema">Cinema:</label>
                 <select id="cinema" name="cinema" required>
                     <option value="all">All</option>
                 {% for cinema in cinemas %}
                     <option value="{{ cinema.name }}">{{ cinema.name }} ({{ cinema.location }})</option>
                 {% endfor %}
-            </select>
+            </select> -->
             <!-- Description -->
             <label for="description">Description:</label>
             <textarea id="description" name="description" placeholder="Enter movie description"></textarea>
