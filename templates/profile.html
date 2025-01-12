@@ -196,6 +196,12 @@ function showToast(message) {
 
 function sendFriendRequest() {
   const uid = document.getElementById('searchUserId').value;
+  const currentUserId = '{{ current_user.id }}'; // 使用後端模板傳遞當前用戶 ID
+  
+  if (uid === currentUserId) {
+    showToast('不能向自己發送好友邀請');
+    return;
+  }
   
   fetch('/send-friend-request', {
     method: 'POST',

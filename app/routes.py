@@ -497,12 +497,16 @@ def delete_review(review_id):
 @main.route('/send-friend-request', methods=['POST'])
 @login_required
 def send_friend_request():
-    # 使用 current_user 获取發送者 ID
     sender_id = current_user.id
     
-    # 从请求中获取接收者的 UID
+    # 从请求中获取接收者的 UID，並確保其為整數
     data = request.json
     receiver_uid = data.get('uid')
+    
+    try:
+        receiver_uid = int(receiver_uid)  # 確保 UID 是整數
+    except (TypeError, ValueError):
+        return jsonify({'error': '用戶 ID 無效'}), 400
     
     # 防止用户向自己發送好友请求
     if sender_id == receiver_uid:
