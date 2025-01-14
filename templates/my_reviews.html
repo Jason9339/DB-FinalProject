@@ -52,6 +52,9 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;    /* 垂直置中 */
+  justify-content: center; /* 水平置中 */
 }
 
 .btn-edit:hover {
@@ -68,5 +71,20 @@
   font-size: 1.2rem;
   margin: 2rem 0;
 }
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
 </style>
 {% endblock %}

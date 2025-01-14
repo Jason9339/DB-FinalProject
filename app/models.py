@@ -123,8 +123,8 @@ class Booking(db.Model):
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    movie_id = db.Column(db.Integer, db.ForeignKey("movie.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey("movie.id", ondelete="CASCADE"), nullable=False)
     content = db.Column(db.Text, nullable=False)
     rate = db.Column(db.Float, nullable=False)
 

@@ -14,7 +14,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 
 from flask import request, redirect, url_for
-from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking, Hall, Seat
+from app.models import User, Movie, Cinema, ScreeningTime, Booking, Friend, Review, Booking, Hall, Seat, user_favorites
 from .models import User, FriendRequest, Review
 from app.forms import RegistrationForm, LoginForm, BookingForm
 from datetime import datetime
@@ -935,6 +935,15 @@ def delete_movie():
             flash("Cinema not found.", "error")
             return redirect(url_for('main.delete_movie', cinema=selected_cinema))
 
+        # 刪除與 Movie 相關的評論和最愛
+        Review.query.filter_by(movie_id=movie_to_delete.id).delete()  # 刪除所有評論
+        db.session.commit()
+
+        # 刪除所有將該 Movie 設為最愛的紀錄
+        db.session.query(user_favorites).filter_by(movie_id=movie_to_delete.id).delete()
+        db.session.commit()
+
+        # 刪除相關的 ScreeningTime
         ScreeningTime.query.filter_by(movie_id=movie_to_delete.id, cinema_id=cinema.id).delete()
         remaining_screenings = ScreeningTime.query.filter_by(movie_id=movie_to_delete.id).count()
 
