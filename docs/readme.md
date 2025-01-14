@@ -1,11 +1,6 @@
-## Note 
-- [ ] github 上傳各組專題題目說明(PDF, 包括題目、題目 說明、資料需求分析、系統功能分析)，Moodle 登記 github網址
-- [ ] github 上傳各組 PDF 檔的 ER Model 設計報告、 Relational Schema 設計報告
-- [ ] github 上傳各組 PDF 檔的系統架構，包括系統功能、 系統開發的程式語言、DBMS 與工具、系統模組
-
-
 #### [ER Model](DBMS_ER_Model.pdf)
 #### [Relational Schema](DBMS_schema.pdf)
 
-#### [專題題目說明](https://docs.google.com/document/d/1qoAU9gMx5AhGUXotZhM36or8CdsMPAHw8nJPB1ATvQ8/edit?tab=t.0)
+#### [專題文件](https://docs.google.com/document/d/1qoAU9gMx5AhGUXotZhM36or8CdsMPAHw8nJPB1ATvQ8/edit?tab=t.0)
 
+#### [專題ppt](ppt.pdf)
